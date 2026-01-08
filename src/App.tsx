@@ -5,7 +5,7 @@ import {
   Plus, 
   Trash2, 
   ChevronRight, 
-  Flame, // <--- ¡AQUÍ ESTÁ! Agregado de nuevo para solucionar el error
+  Flame, 
   User, 
   ArrowLeft,
   Search,
@@ -43,7 +43,7 @@ interface LogsMap {
   [date: string]: LogItem[];
 }
 
-// --- COMPONENTE DE ESTILOS Y CONFIGURACIÓN ---
+// --- COMPONENTE DE ESTILOS Y CONFIGURACIÓN PWA ---
 const StyleInjector = () => {
   useEffect(() => {
     // 1. Cargar Fuente Inter
@@ -87,19 +87,47 @@ const StyleInjector = () => {
     document.body.style.color = 'white';
     document.body.style.fontFamily = "'Inter', sans-serif";
 
-    // 4. CAMBIAR ICONO DE LA APP (FAVICON)
-    const setFavicon = (url: string) => {
-      let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
-      if (!link) {
-        link = document.createElement('link');
-        link.rel = 'icon';
-        document.getElementsByTagName('head')[0].appendChild(link);
+    // 4. CAMBIAR ICONO Y ACTIVAR PWA (NUEVO)
+    const setFaviconAndManifest = () => {
+      // Favicon
+      let linkIcon = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+      if (!linkIcon) {
+        linkIcon = document.createElement('link');
+        linkIcon.rel = 'icon';
+        document.head.appendChild(linkIcon);
       }
-      link.href = url;
+      linkIcon.href = '/logo.jpg';
+
+      // Manifest (Esencial para instalar)
+      let linkManifest = document.querySelector("link[rel='manifest']") as HTMLLinkElement;
+      if (!linkManifest) {
+        linkManifest = document.createElement('link');
+        linkManifest.rel = 'manifest';
+        linkManifest.href = '/manifest.json';
+        document.head.appendChild(linkManifest);
+      }
+
+      // Meta Theme Color (Para que la barra de estado del celular se vea verde/negra)
+      let metaTheme = document.querySelector("meta[name='theme-color']") as HTMLMetaElement;
+      if (!metaTheme) {
+        metaTheme = document.createElement('meta');
+        metaTheme.name = 'theme-color';
+        document.head.appendChild(metaTheme);
+      }
+      metaTheme.content = '#09090b';
     };
 
-    // --- ICONO DE LA APP ---
-    setFavicon('/logo.png');
+    setFaviconAndManifest();
+    
+    // 5. REGISTRAR SERVICE WORKER (Esencial para instalar)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(
+          (registration) => console.log('SW registrado con éxito: ', registration.scope),
+          (err) => console.log('SW fallo al registrarse: ', err)
+        );
+      });
+    }
     
     document.title = "CaloTrack - Ernesto Edition";
 
@@ -211,8 +239,8 @@ const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => void }) =>
       <div className="absolute top-40 -left-20 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl" />
 
       <div className="mb-12 text-center">
-        {/* LOGO CONTAINER: Fondo transparente para que luzca tu imagen */}
-        <div className="w-32 h-32 mx-auto flex items-center justify-center mb-6 overflow-visible">
+        {/* LOGO CONTAINER: Totalmente transparente */}
+        <div className="w-32 h-32 mx-auto flex items-center justify-center mb-6">
           <img 
             src="/logo.jpg" 
             alt="CaloTrack Logo" 
@@ -224,26 +252,23 @@ const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => void }) =>
       </div>
 
       <div className="w-full max-w-sm space-y-4">
-        {/* BOTÓN 1: CONFIGURAR PERFIL */}
         <Button onClick={() => onNavigate('setup')} variant="secondary" className="bg-zinc-900 border-zinc-800">
           <User size={24} className="text-emerald-500" />
           Configurar Perfil
         </Button>
 
-        {/* BOTÓN 2: INGRESAR CALORÍAS */}
         <Button onClick={() => onNavigate('calendar')} variant="primary">
           <CalendarIcon size={24} />
           Ingresar Calorías
         </Button>
         
-        {/* BOTÓN 3: OBJETIVO SEMANAL */}
         <Button onClick={() => onNavigate('goals')} variant="secondary" className="bg-zinc-900 border-zinc-800">
           <Target size={24} className="text-emerald-500" />
           Objetivo Semanal
         </Button>
       </div>
 
-      <p className="mt-12 text-zinc-600 text-sm">v1.9.0 • Ernesto Edition (TS)</p>
+      <p className="mt-12 text-zinc-600 text-sm">v2.0.0 • Ernesto Edition (PWA)</p>
     </div>
   );
 };
@@ -407,7 +432,7 @@ interface CalendarProps {
 }
 
 const CalendarView: React.FC<CalendarProps> = ({ onSelectDate, onBack }) => {
-  const [currentDate] = useState(new Date()); // Se eliminó setCurrentDate porque no se usaba
+  const [currentDate] = useState(new Date());
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -705,6 +730,7 @@ const DailyLogView: React.FC<DailyLogProps> = ({ user, log, dateStr, onAddFood, 
                   <path className={progress > 100 ? "text-red-500" : "text-emerald-500"} strokeDasharray={`${progress}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center flex-col">
+                  {/* Aquí se usa el componente Flame que daba error */}
                   <Flame size={20} className={progress > 100 ? "text-red-500" : "text-emerald-500"} fill="currentColor" />
                 </div>
             </div>

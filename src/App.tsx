@@ -5,7 +5,6 @@ import {
   Plus, 
   Trash2, 
   ChevronRight, 
-  Flame, 
   User, 
   ArrowLeft,
   Search,
@@ -16,7 +15,7 @@ import {
   XCircle
 } from 'lucide-react';
 
-// --- INTERFACES (Necesarias para TypeScript) ---
+// --- INTERFACES ---
 interface FoodItemDB {
   name: string;
   unit: string;
@@ -98,11 +97,10 @@ const StyleInjector = () => {
       link.href = url;
     };
 
-    // --- ¡IMPORTANTE! CAMBIA ESTO POR EL NOMBRE DE TU IMAGEN ---
-    // Si tu imagen en la carpeta 'public' se llama 'mi-logo.png', pon '/mi-logo.png'
-    setFavicon('/logo.jpg'); 
+    // --- PARTE 1: AQUÍ CAMBIAS EL ICONO DE LA PESTAÑA ---
+    // Si tu archivo se llama 'mi-imagen.png', pon '/mi-imagen.png'
+    setFavicon('/logo.png'); // <--- CAMBIA ESTO SI ES NECESARIO
     
-    // También cambiamos el título de la pestaña
     document.title = "CaloTrack - Ernesto Edition";
 
   }, []);
@@ -213,15 +211,20 @@ const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => void }) =>
       <div className="absolute top-40 -left-20 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl" />
 
       <div className="mb-12 text-center">
-        <div className="w-20 h-20 bg-emerald-500 rounded-3xl mx-auto flex items-center justify-center mb-6 shadow-2xl shadow-emerald-500/30 rotate-3">
-          <Flame className="text-zinc-950" size={40} fill="currentColor" />
+        {/* PARTE 2: AQUÍ CAMBIAS LA IMAGEN DEL MENÚ PRINCIPAL */}
+        <div className="w-24 h-24 bg-emerald-500 rounded-3xl mx-auto flex items-center justify-center mb-6 shadow-2xl shadow-emerald-500/30 rotate-3 overflow-hidden p-2">
+          <img 
+            src="/logo.jpg"  // <--- CAMBIA ESTO SI ES NECESARIO
+            alt="CaloTrack Logo" 
+            className="w-full h-full object-contain" 
+          />
         </div>
-        <h1 className="text-4xl font-extrabold text-white mb-2 tracking-tight">CaloTrack</h1>
+        <h1 className="text-5xl font-extrabold text-white mb-2 tracking-tight">Que CALORia</h1>
         <p className="text-zinc-400 text-lg">Tu control diario, simplificado.</p>
       </div>
 
       <div className="w-full max-w-sm space-y-4">
-        {/* BOTÓN 1: CONFIGURAR PERFIL (Ahora al principio) */}
+        {/* BOTÓN 1: CONFIGURAR PERFIL */}
         <Button onClick={() => onNavigate('setup')} variant="secondary" className="bg-zinc-900 border-zinc-800">
           <User size={24} className="text-emerald-500" />
           Configurar Perfil
@@ -240,7 +243,7 @@ const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => void }) =>
         </Button>
       </div>
 
-      <p className="mt-12 text-zinc-600 text-sm">v1.6.0 • Ernesto Edition (TS)</p>
+      <p className="mt-12 text-zinc-600 text-sm">v1.8.0 • Ernesto Edition (TS)</p>
     </div>
   );
 };

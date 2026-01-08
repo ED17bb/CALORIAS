@@ -19,8 +19,34 @@ import {
   XCircle
 } from 'lucide-react';
 
+// --- INTERFACES (Necesarias para TypeScript) ---
+interface FoodItemDB {
+  name: string;
+  unit: string;
+  calPerUnit: number;
+}
+
+interface LogItem {
+  name: string;
+  amount: number;
+  unit: string;
+  calories: number;
+}
+
+interface UserData {
+  weight: string;
+  height: string;
+  age: string;
+  gender: string;
+  activity: string;
+  goal: string;
+}
+
+interface LogsMap {
+  [date: string]: LogItem[];
+}
+
 // --- COMPONENTE DE ESTILOS AUTOMÁTICOS ---
-// Este componente se encarga de cargar Tailwind y las fuentes sin tocar el HTML
 const StyleInjector = () => {
   useEffect(() => {
     // 1. Cargar Fuente Inter
@@ -38,9 +64,10 @@ const StyleInjector = () => {
       script.id = 'tailwind-script';
       script.src = "https://cdn.tailwindcss.com";
       script.onload = () => {
-        // 3. Configurar colores una vez cargado
-        if (window.tailwind) {
-          window.tailwind.config = {
+        // 3. Configurar colores (Usamos 'any' para evitar errores de TS con window)
+        const win = window as any;
+        if (win.tailwind) {
+          win.tailwind.config = {
             theme: {
               extend: {
                 fontFamily: { sans: ['Inter', 'sans-serif'] },
@@ -59,18 +86,18 @@ const StyleInjector = () => {
       document.head.appendChild(script);
     }
 
-    // 4. Forzar fondo oscuro en el body
+    // 4. Forzar fondo oscuro
     document.body.style.backgroundColor = '#09090b';
     document.body.style.color = 'white';
     document.body.style.fontFamily = "'Inter', sans-serif";
 
   }, []);
 
-  return null; // Este componente no renderiza nada visualmente, solo configura
+  return null;
 };
 
-// --- Base de datos simulada de alimentos comunes ---
-const COMMON_FOODS = [
+// --- BASE DE DATOS ---
+const COMMON_FOODS: FoodItemDB[] = [
   { name: 'Pechuga de Pollo (Cocida)', unit: 'g', calPerUnit: 1.65 },
   { name: 'Arroz Blanco (Cocido)', unit: 'g', calPerUnit: 1.30 },
   { name: 'Huevo Grande', unit: 'unidad', calPerUnit: 78 },
@@ -88,18 +115,18 @@ const COMMON_FOODS = [
   { name: 'Almendras', unit: 'g', calPerUnit: 5.79 },
 ];
 
-// --- Utilidades de Fecha ---
-const getTodayStr = () => new Date().toLocaleDateString('en-CA'); 
+// --- UTILIDADES ---
+const getTodayStr = (): string => new Date().toLocaleDateString('en-CA'); 
 
-const getMonday = (d) => {
-  d = new Date(d);
-  const day = d.getDay();
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1);
-  return new Date(d.setDate(diff));
+const getMonday = (d: Date): Date => {
+  const date = new Date(d);
+  const day = date.getDay();
+  const diff = date.getDate() - day + (day === 0 ? -6 : 1);
+  return new Date(date.setDate(diff));
 };
 
-const getWeekDays = (mondayDate) => {
-  const week = [];
+const getWeekDays = (mondayDate: Date): string[] => {
+  const week: string[] = [];
   for (let i = 0; i < 7; i++) {
     const nextDay = new Date(mondayDate);
     nextDay.setDate(mondayDate.getDate() + i);
@@ -108,9 +135,13 @@ const getWeekDays = (mondayDate) => {
   return week;
 };
 
-// --- Componentes UI Reutilizables ---
+// --- COMPONENTES UI (Tipados) ---
 
-const Button = ({ children, onClick, variant = 'primary', className = '', ...props }) => {
+interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
+  variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
+}
+
+const Button: React.FC<ButtonProps> = ({ children, onClick, variant = 'primary', className = '', ...props }) => {
   const baseStyle = "w-full py-4 rounded-2xl font-bold transition-all duration-200 active:scale-95 flex items-center justify-center gap-3 text-lg";
   const variants = {
     primary: "bg-emerald-500 hover:bg-emerald-400 text-zinc-950 shadow-lg shadow-emerald-500/20",
@@ -126,7 +157,11 @@ const Button = ({ children, onClick, variant = 'primary', className = '', ...pro
   );
 };
 
-const Input = ({ label, ...props }) => (
+interface InputProps extends React.InputHTMLAttributes<HTMLInputElement> {
+  label: string;
+}
+
+const Input: React.FC<InputProps> = ({ label, ...props }) => (
   <div className="mb-4">
     <label className="block text-xs font-medium text-zinc-400 mb-1 uppercase tracking-wider">{label}</label>
     <input 
@@ -136,7 +171,12 @@ const Input = ({ label, ...props }) => (
   </div>
 );
 
-const Select = ({ label, options, ...props }) => (
+interface SelectProps extends React.SelectHTMLAttributes<HTMLSelectElement> {
+  label: string;
+  options: { value: string; label: string }[];
+}
+
+const Select: React.FC<SelectProps> = ({ label, options, ...props }) => (
   <div className="mb-4">
     <label className="block text-xs font-medium text-zinc-400 mb-1 uppercase tracking-wider">{label}</label>
     <select 
@@ -148,10 +188,10 @@ const Select = ({ label, options, ...props }) => (
   </div>
 );
 
-// --- Pantallas ---
+// --- PANTALLAS ---
 
-// 1. Home / Menú Principal
-const HomeScreen = ({ onNavigate }) => {
+// 1. Home
+const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => void }) => {
   return (
     <div className="min-h-screen bg-zinc-950 flex flex-col items-center justify-center p-6 relative overflow-hidden">
       <div className="absolute top-0 left-0 w-full h-1/2 bg-gradient-to-b from-emerald-900/10 to-transparent -z-10" />
@@ -183,13 +223,19 @@ const HomeScreen = ({ onNavigate }) => {
         </Button>
       </div>
 
-      <p className="mt-12 text-zinc-600 text-sm">v1.4.0 • Ernesto Edition</p>
+      <p className="mt-12 text-zinc-600 text-sm">v1.5.0 • Ernesto Edition (TS)</p>
     </div>
   );
 };
 
 // 2. Objetivo Semanal
-const WeeklyGoalView = ({ user, allLogs, onBack }) => {
+interface WeeklyGoalProps {
+  user: UserData | null;
+  allLogs: LogsMap;
+  onBack: () => void;
+}
+
+const WeeklyGoalView: React.FC<WeeklyGoalProps> = ({ user, allLogs, onBack }) => {
   const dailyTarget = useMemo(() => {
     if (!user) return 2000;
     let bmr;
@@ -232,8 +278,8 @@ const WeeklyGoalView = ({ user, allLogs, onBack }) => {
 
     let status = 'neutral';
     if (weeklySum === 0) status = 'no_data';
-    else if (user.goal === 'lose') status = weeklySum <= weeklyTarget ? 'success' : 'fail';
-    else if (user.goal === 'gain') status = weeklySum >= weeklyTarget ? 'success' : 'fail';
+    else if (user && user.goal === 'lose') status = weeklySum <= weeklyTarget ? 'success' : 'fail';
+    else if (user && user.goal === 'gain') status = weeklySum >= weeklyTarget ? 'success' : 'fail';
     else status = (weeklySum >= weeklyTarget * 0.9 && weeklySum <= weeklyTarget * 1.1) ? 'success' : 'fail';
 
     historyWeeks.push({
@@ -335,8 +381,13 @@ const WeeklyGoalView = ({ user, allLogs, onBack }) => {
 };
 
 // 3. Calendario
-const CalendarView = ({ onSelectDate, onBack }) => {
-  const [currentDate, setCurrentDate] = useState(new Date());
+interface CalendarProps {
+  onSelectDate: (date: string) => void;
+  onBack: () => void;
+}
+
+const CalendarView: React.FC<CalendarProps> = ({ onSelectDate, onBack }) => {
+  const [currentDate] = useState(new Date()); // Se eliminó setCurrentDate porque no se usaba
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
@@ -345,7 +396,7 @@ const CalendarView = ({ onSelectDate, onBack }) => {
   const today = new Date();
   const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
 
-  const handleDayClick = (day) => {
+  const handleDayClick = (day: number) => {
     const clickedDate = new Date(year, month, day);
     const offset = clickedDate.getTimezoneOffset();
     const dateLocal = new Date(clickedDate.getTime() - (offset*60*1000));
@@ -404,8 +455,14 @@ const CalendarView = ({ onSelectDate, onBack }) => {
 };
 
 // 4. Setup de Usuario
-const UserSetup = ({ userData, onSave, onBack }) => {
-  const [formData, setFormData] = useState(userData || {
+interface UserSetupProps {
+  userData: UserData | null;
+  onSave: (data: UserData) => void;
+  onBack: (() => void) | null;
+}
+
+const UserSetup: React.FC<UserSetupProps> = ({ userData, onSave, onBack }) => {
+  const [formData, setFormData] = useState<UserData>(userData || {
     weight: '',
     height: '',
     age: '',
@@ -414,12 +471,12 @@ const UserSetup = ({ userData, onSave, onBack }) => {
     goal: 'maintain'
   });
 
-  const handleChange = (e) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.weight || !formData.height || !formData.age) return;
     onSave(formData);
@@ -456,11 +513,16 @@ const UserSetup = ({ userData, onSave, onBack }) => {
 };
 
 // 5. Modal Agregar Comida
-const AddFoodModal = ({ onClose, onAdd }) => {
+interface AddFoodProps {
+  onClose: () => void;
+  onAdd: (item: LogItem) => void;
+}
+
+const AddFoodModal: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
   const [searchTerm, setSearchTerm] = useState('');
-  const [selectedFood, setSelectedFood] = useState(null);
+  const [selectedFood, setSelectedFood] = useState<FoodItemDB | null>(null);
   const [amount, setAmount] = useState('');
-  const [mode, setMode] = useState('search');
+  const [mode, setMode] = useState<'search' | 'manual'>('search');
 
   const filteredFoods = useMemo(() => {
     return COMMON_FOODS.filter(f => f.name.toLowerCase().includes(searchTerm.toLowerCase()));
@@ -474,7 +536,7 @@ const AddFoodModal = ({ onClose, onAdd }) => {
     }
   };
 
-  const handleManualAdd = (manualData) => {
+  const handleManualAdd = (manualData: LogItem) => {
     onAdd(manualData);
     onClose();
   };
@@ -523,7 +585,16 @@ const AddFoodModal = ({ onClose, onAdd }) => {
               )}
             </>
           ) : (
-             <form onSubmit={(e) => { e.preventDefault(); const fd = new FormData(e.target); handleManualAdd({ name: fd.get('name'), amount: 1, unit: 'porción', calories: parseInt(fd.get('cals')) }) }} className="animate-fade-in">
+             <form onSubmit={(e) => { 
+                e.preventDefault(); 
+                const fd = new FormData(e.currentTarget); // Corregido para TS
+                handleManualAdd({ 
+                  name: fd.get('name') as string, 
+                  amount: 1, 
+                  unit: 'porción', 
+                  calories: parseInt(fd.get('cals') as string) 
+                }) 
+              }} className="animate-fade-in">
                <Input label="Nombre" name="name" required placeholder="Ej. Hamburguesa" />
                <Input label="Calorías" name="cals" type="number" required placeholder="500" />
                <Button type="submit" className="mt-4">Guardar</Button>
@@ -536,10 +607,20 @@ const AddFoodModal = ({ onClose, onAdd }) => {
 };
 
 // 6. Vista Diaria (Daily Log)
-const DailyLogView = ({ user, log, dateStr, onAddFood, onDeleteFood, onBack }) => {
+interface DailyLogProps {
+  user: UserData | null;
+  log: LogItem[];
+  dateStr: string;
+  onAddFood: (item: LogItem) => void;
+  onDeleteFood: (index: number) => void;
+  onBack: () => void;
+}
+
+const DailyLogView: React.FC<DailyLogProps> = ({ user, log, dateStr, onAddFood, onDeleteFood, onBack }) => {
   const [showAddModal, setShowAddModal] = useState(false);
 
   const calculateTargets = () => {
+    if (!user) return 2000;
     let bmr;
     const weight = parseFloat(user.weight);
     const height = parseFloat(user.height);
@@ -559,7 +640,7 @@ const DailyLogView = ({ user, log, dateStr, onAddFood, onDeleteFood, onBack }) =
   const progress = Math.min((consumedCalories / targetCalories) * 100, 100);
 
   const [y, m, d] = dateStr.split('-');
-  const dateObj = new Date(y, m - 1, d);
+  const dateObj = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
   const dateDisplay = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
 
   return (
@@ -658,11 +739,11 @@ const DailyLogView = ({ user, log, dateStr, onAddFood, onDeleteFood, onBack }) =
   );
 };
 
-// --- Componente Raíz ---
+// --- COMPONENTE RAÍZ ---
 export default function App() {
   const [view, setView] = useState('loading'); // loading, setup, home, calendar, dailylog, goals
-  const [userData, setUserData] = useState(null);
-  const [allLogs, setAllLogs] = useState({});
+  const [userData, setUserData] = useState<UserData | null>(null);
+  const [allLogs, setAllLogs] = useState<LogsMap>({});
   const [selectedDate, setSelectedDate] = useState(getTodayStr());
 
   // Cargar datos
@@ -672,7 +753,7 @@ export default function App() {
     
     // Migración simple para versión antigua
     const legacyLog = localStorage.getItem('calotrack_log');
-    let initialLogs = {};
+    let initialLogs: LogsMap = {};
 
     if (savedAllLogs) {
       initialLogs = JSON.parse(savedAllLogs);
@@ -697,7 +778,7 @@ export default function App() {
     }
   }, [allLogs]);
 
-  const handleSaveUser = (data) => {
+  const handleSaveUser = (data: UserData) => {
     setUserData(data);
     localStorage.setItem('calotrack_user', JSON.stringify(data));
     setView('home');
@@ -705,14 +786,14 @@ export default function App() {
 
   const currentLog = allLogs[selectedDate] || [];
 
-  const handleAddFood = (foodItem) => {
+  const handleAddFood = (foodItem: LogItem) => {
     setAllLogs(prev => ({
       ...prev,
       [selectedDate]: [foodItem, ...(prev[selectedDate] || [])]
     }));
   };
 
-  const handleDeleteFood = (indexToDelete) => {
+  const handleDeleteFood = (indexToDelete: number) => {
     setAllLogs(prev => ({
       ...prev,
       [selectedDate]: prev[selectedDate].filter((_, idx) => idx !== indexToDelete)
@@ -723,7 +804,7 @@ export default function App() {
 
   return (
     <div className="font-sans text-zinc-100 bg-zinc-950 min-h-screen selection:bg-emerald-500/30">
-      <StyleInjector /> {/* <--- AQUI ESTA LA MAGIA */}
+      <StyleInjector /> {/* Inyector automático de estilos y fuente */}
       
       {view === 'home' && (
         <HomeScreen 

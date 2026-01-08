@@ -43,7 +43,7 @@ interface LogsMap {
   [date: string]: LogItem[];
 }
 
-// --- COMPONENTE DE ESTILOS AUTOMÁTICOS ---
+// --- COMPONENTE DE ESTILOS Y CONFIGURACIÓN ---
 const StyleInjector = () => {
   useEffect(() => {
     // 1. Cargar Fuente Inter
@@ -61,7 +61,6 @@ const StyleInjector = () => {
       script.id = 'tailwind-script';
       script.src = "https://cdn.tailwindcss.com";
       script.onload = () => {
-        // 3. Configurar colores (Usamos 'any' para evitar errores de TS con window)
         const win = window as any;
         if (win.tailwind) {
           win.tailwind.config = {
@@ -83,10 +82,28 @@ const StyleInjector = () => {
       document.head.appendChild(script);
     }
 
-    // 4. Forzar fondo oscuro
+    // 3. Forzar fondo oscuro
     document.body.style.backgroundColor = '#09090b';
     document.body.style.color = 'white';
     document.body.style.fontFamily = "'Inter', sans-serif";
+
+    // 4. CAMBIAR ICONO DE LA APP (FAVICON)
+    const setFavicon = (url: string) => {
+      let link = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+      if (!link) {
+        link = document.createElement('link');
+        link.rel = 'icon';
+        document.getElementsByTagName('head')[0].appendChild(link);
+      }
+      link.href = url;
+    };
+
+    // --- ¡IMPORTANTE! CAMBIA ESTO POR EL NOMBRE DE TU IMAGEN ---
+    // Si tu imagen en la carpeta 'public' se llama 'mi-logo.png', pon '/mi-logo.png'
+    setFavicon('/logo.jpg'); 
+    
+    // También cambiamos el título de la pestaña
+    document.title = "CaloTrack - Ernesto Edition";
 
   }, []);
 

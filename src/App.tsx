@@ -204,23 +204,26 @@ const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => void }) =>
       </div>
 
       <div className="w-full max-w-sm space-y-4">
+        {/* BOTÓN 1: CONFIGURAR PERFIL (Ahora al principio) */}
+        <Button onClick={() => onNavigate('setup')} variant="secondary" className="bg-zinc-900 border-zinc-800">
+          <User size={24} className="text-emerald-500" />
+          Configurar Perfil
+        </Button>
+
+        {/* BOTÓN 2: INGRESAR CALORÍAS */}
         <Button onClick={() => onNavigate('calendar')} variant="primary">
           <CalendarIcon size={24} />
           Ingresar Calorías
         </Button>
         
+        {/* BOTÓN 3: OBJETIVO SEMANAL */}
         <Button onClick={() => onNavigate('goals')} variant="secondary" className="bg-zinc-900 border-zinc-800">
           <Target size={24} className="text-emerald-500" />
           Objetivo Semanal
         </Button>
-
-        <Button onClick={() => onNavigate('setup')} variant="ghost" className="mt-4 border border-zinc-800">
-          <User size={20} />
-          Mi Perfil
-        </Button>
       </div>
 
-      <p className="mt-12 text-zinc-600 text-sm">v1.5.0 • Ernesto Edition (TS)</p>
+      <p className="mt-12 text-zinc-600 text-sm">v1.6.0 • Ernesto Edition (TS)</p>
     </div>
   );
 };
@@ -762,10 +765,11 @@ export default function App() {
 
     if (savedUser) {
       setUserData(JSON.parse(savedUser));
-      setView('home');
-    } else {
-      setView('setup');
     }
+    
+    // CAMBIO: Siempre ir al HOME, tenga datos o no
+    setView('home'); 
+
   }, []);
 
   // Guardar logs

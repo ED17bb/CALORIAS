@@ -219,8 +219,8 @@ const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => void }) =>
             className="w-full h-full object-contain drop-shadow-2xl" 
           />
         </div>
-        <h1 className="text-5xl font-extrabold text-white mb-2 tracking-tight">QUE CALOR</h1>
-        <p className="text-zinc-400 text-lg">Tu control diario, simplificado.</p>
+        <h1 className="text-5xl font-extrabold text-white mb-2 tracking-tight">QUE CALOR IA</h1>
+        <p className="text-zinc-400 text-lg">Anota todo lo que comes, dale</p>
       </div>
 
       <div className="w-full max-w-sm space-y-4">

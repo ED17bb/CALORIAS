@@ -136,23 +136,77 @@ const StyleInjector = () => {
   return null;
 };
 
-// --- BASE DE DATOS ---
+// --- BASE DE DATOS AMPLIADA (50+ Alimentos) ---
 const COMMON_FOODS: FoodItemDB[] = [
+  // Proteínas
   { name: 'Pechuga de Pollo (Cocida)', unit: 'g', calPerUnit: 1.65 },
+  { name: 'Carne de Res (Magra/Bistec)', unit: 'g', calPerUnit: 2.50 },
+  { name: 'Carne Molida (5% grasa)', unit: 'g', calPerUnit: 1.37 },
+  { name: 'Chuleta de Cerdo', unit: 'g', calPerUnit: 2.31 },
+  { name: 'Pescado Blanco (Tilapia/Merluza)', unit: 'g', calPerUnit: 0.96 },
+  { name: 'Salmón (Cocido)', unit: 'g', calPerUnit: 2.08 },
+  { name: 'Atún en Agua (Drenado)', unit: 'g', calPerUnit: 1.16 },
+  { name: 'Huevo Grande (Hervido/Poaché)', unit: 'unidad', calPerUnit: 78 },
+  { name: 'Huevo Frito', unit: 'unidad', calPerUnit: 90 },
+  { name: 'Claras de Huevo', unit: 'unidad', calPerUnit: 17 },
+  { name: 'Jamón de Pavo/Cocido', unit: 'rebanada', calPerUnit: 30 },
+
+  // Carbohidratos y Granos
   { name: 'Arroz Blanco (Cocido)', unit: 'g', calPerUnit: 1.30 },
-  { name: 'Huevo Grande', unit: 'unidad', calPerUnit: 78 },
-  { name: 'Palta / Aguacate', unit: 'g', calPerUnit: 1.60 },
+  { name: 'Arroz Integral (Cocido)', unit: 'g', calPerUnit: 1.11 },
+  { name: 'Pasta / Espagueti (Cocido)', unit: 'g', calPerUnit: 1.31 },
+  { name: 'Pan Blanco', unit: 'rebanada', calPerUnit: 67 },
   { name: 'Pan Integral', unit: 'rebanada', calPerUnit: 80 },
-  { name: 'Manzana', unit: 'unidad', calPerUnit: 95 },
-  { name: 'Banana', unit: 'unidad', calPerUnit: 105 },
-  { name: 'Avena (Cruda)', unit: 'g', calPerUnit: 3.89 },
-  { name: 'Leche Entera', unit: 'ml', calPerUnit: 0.61 },
+  { name: 'Avena (Hojuelas Crudas)', unit: 'g', calPerUnit: 3.89 },
+  { name: 'Papa / Patata (Hervida)', unit: 'g', calPerUnit: 0.87 },
+  { name: 'Batata / Camote (Hervido)', unit: 'g', calPerUnit: 0.86 },
+  { name: 'Arepa de Maíz (Mediana/Sola)', unit: 'unidad', calPerUnit: 220 },
+  { name: 'Tortilla de Maíz', unit: 'unidad', calPerUnit: 52 },
+  { name: 'Tortilla de Trigo', unit: 'unidad', calPerUnit: 140 },
+  { name: 'Frijoles / Caraotas (Cocidos)', unit: 'g', calPerUnit: 1.32 },
+  { name: 'Lentejas (Cocidas)', unit: 'g', calPerUnit: 1.16 },
+
+  // Grasas y Lácteos
   { name: 'Aceite de Oliva', unit: 'cucharada', calPerUnit: 119 },
-  { name: 'Atún en Agua', unit: 'g', calPerUnit: 1.16 },
-  { name: 'Papas (Hervidas)', unit: 'g', calPerUnit: 0.87 },
-  { name: 'Carne de Res (Magra)', unit: 'g', calPerUnit: 2.50 },
-  { name: 'Yogur Griego', unit: 'g', calPerUnit: 0.59 },
+  { name: 'Aceite de Girasol/Maíz', unit: 'cucharada', calPerUnit: 120 },
+  { name: 'Mantequilla', unit: 'cucharada', calPerUnit: 102 },
+  { name: 'Palta / Aguacate', unit: 'g', calPerUnit: 1.60 },
+  { name: 'Maní / Cacahuates (Tostados)', unit: 'g', calPerUnit: 5.67 },
   { name: 'Almendras', unit: 'g', calPerUnit: 5.79 },
+  { name: 'Nueces', unit: 'g', calPerUnit: 6.54 },
+  { name: 'Leche Entera', unit: 'ml', calPerUnit: 0.61 },
+  { name: 'Leche Descremada', unit: 'ml', calPerUnit: 0.34 },
+  { name: 'Yogur Griego Natural', unit: 'g', calPerUnit: 0.59 },
+  { name: 'Queso Mozzarella', unit: 'g', calPerUnit: 2.80 },
+  { name: 'Queso Blanco Duro/Fresco', unit: 'g', calPerUnit: 3.00 },
+  { name: 'Queso Amarillo (Loncha)', unit: 'unidad', calPerUnit: 104 },
+
+  // Frutas y Verduras
+  { name: 'Manzana (Mediana)', unit: 'unidad', calPerUnit: 95 },
+  { name: 'Banana / Cambur (Mediano)', unit: 'unidad', calPerUnit: 105 },
+  { name: 'Naranja', unit: 'unidad', calPerUnit: 62 },
+  { name: 'Mandarina', unit: 'unidad', calPerUnit: 53 },
+  { name: 'Fresas / Frutillas', unit: 'g', calPerUnit: 0.32 },
+  { name: 'Uvas', unit: 'g', calPerUnit: 0.67 },
+  { name: 'Sandía / Patilla', unit: 'g', calPerUnit: 0.30 },
+  { name: 'Zanahoria (Cruda)', unit: 'g', calPerUnit: 0.41 },
+  { name: 'Brócoli (Cocido)', unit: 'g', calPerUnit: 0.35 },
+  { name: 'Tomate', unit: 'g', calPerUnit: 0.18 },
+  { name: 'Lechuga', unit: 'g', calPerUnit: 0.15 },
+
+  // Snacks, Comida Rápida y Otros
+  { name: 'Tequeño de Queso (Frito)', unit: 'unidad', calPerUnit: 320 },
+  { name: 'Empanada de Carne (Frita)', unit: 'unidad', calPerUnit: 350 },
+  { name: 'Pizza (Rebanada Pepperoni)', unit: 'unidad', calPerUnit: 290 },
+  { name: 'Hamburguesa (Con Queso, genérica)', unit: 'unidad', calPerUnit: 540 },
+  { name: 'Papas Fritas (Porción Mediana)', unit: 'unidad', calPerUnit: 365 },
+  { name: 'Galleta (Tipo María)', unit: 'unidad', calPerUnit: 24 },
+  { name: 'Chocolate Negro (Cuadrito/10g)', unit: 'unidad', calPerUnit: 55 },
+  { name: 'Cerveza (Lata 355ml)', unit: 'unidad', calPerUnit: 153 },
+  { name: 'Coca-Cola / Refresco (Lata)', unit: 'unidad', calPerUnit: 140 },
+  { name: 'Café con Leche y Azúcar', unit: 'taza', calPerUnit: 80 },
+  { name: 'Mayonesa', unit: 'cucharada', calPerUnit: 94 },
+  { name: 'Ketchup / Salsa de Tomate', unit: 'cucharada', calPerUnit: 19 },
 ];
 
 // --- UTILIDADES ---

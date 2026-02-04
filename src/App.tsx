@@ -13,7 +13,8 @@ import {
   Target,
   History,
   CheckCircle2,
-  XCircle
+  XCircle,
+  Save
 } from 'lucide-react';
 
 // --- INTERFACES ---
@@ -21,6 +22,7 @@ interface FoodItemDB {
   name: string;
   unit: string;
   calPerUnit: number;
+  isCustom?: boolean; // Para identificar si fue creado por el usuario
 }
 
 interface LogItem {
@@ -43,7 +45,7 @@ interface LogsMap {
   [date: string]: LogItem[];
 }
 
-// --- COMPONENTE DE ESTILOS Y CONFIGURACIÓN PWA ---
+// --- COMPONENTE DE ESTILOS Y CONFIGURACIÓN ---
 const StyleInjector = () => {
   useEffect(() => {
     // 1. Cargar Fuente Inter
@@ -55,59 +57,37 @@ const StyleInjector = () => {
       document.head.appendChild(link);
     }
 
-    // 2. Cargar Tailwind CSS
-    if (!document.getElementById('tailwind-script')) {
-      const script = document.createElement('script');
-      script.id = 'tailwind-script';
-      script.src = "https://cdn.tailwindcss.com";
-      script.onload = () => {
-        const win = window as any;
-        if (win.tailwind) {
-          win.tailwind.config = {
-            theme: {
-              extend: {
-                fontFamily: { sans: ['Inter', 'sans-serif'] },
-                colors: {
-                  zinc: {
-                    50: '#fafafa', 100: '#f4f4f5', 200: '#e4e4e7', 300: '#d4d4d8', 400: '#a1a1aa',
-                    500: '#71717a', 600: '#52525b', 700: '#3f3f46', 800: '#27272a', 900: '#18181b', 950: '#09090b',
-                  },
-                  emerald: { 400: '#34d399', 500: '#10b981' }
-                }
+    // 2. Configurar Tailwind
+    const script = document.createElement('script');
+    script.src = "https://cdn.tailwindcss.com";
+    script.onload = () => {
+      const win = window as any;
+      if (win.tailwind) {
+        win.tailwind.config = {
+          theme: {
+            extend: {
+              fontFamily: { sans: ['Inter', 'sans-serif'] },
+              colors: {
+                zinc: {
+                  50: '#fafafa', 100: '#f4f4f5', 200: '#e4e4e7', 300: '#d4d4d8', 400: '#a1a1aa',
+                  500: '#71717a', 600: '#52525b', 700: '#3f3f46', 800: '#27272a', 900: '#18181b', 950: '#09090b',
+                },
+                emerald: { 400: '#34d399', 500: '#10b981' }
               }
             }
-          };
-        }
-      };
-      document.head.appendChild(script);
-    }
+          }
+        };
+      }
+    };
+    document.head.appendChild(script);
 
-    // 3. Forzar fondo oscuro
+    // 3. Estilos Base
     document.body.style.backgroundColor = '#09090b';
     document.body.style.color = 'white';
     document.body.style.fontFamily = "'Inter', sans-serif";
 
-    // 4. CAMBIAR ICONO Y ACTIVAR PWA (NUEVO)
-    const setFaviconAndManifest = () => {
-      // Favicon
-      let linkIcon = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
-      if (!linkIcon) {
-        linkIcon = document.createElement('link');
-        linkIcon.rel = 'icon';
-        document.head.appendChild(linkIcon);
-      }
-      linkIcon.href = '/logo.jpg';
-
-      // Manifest (Esencial para instalar)
-      let linkManifest = document.querySelector("link[rel='manifest']") as HTMLLinkElement;
-      if (!linkManifest) {
-        linkManifest = document.createElement('link');
-        linkManifest.rel = 'manifest';
-        linkManifest.href = '/manifest.json';
-        document.head.appendChild(linkManifest);
-      }
-
-      // Meta Theme Color (Para que la barra de estado del celular se vea verde/negra)
+    // 4. Meta Tags
+    const setMetaTags = () => {
       let metaTheme = document.querySelector("meta[name='theme-color']") as HTMLMetaElement;
       if (!metaTheme) {
         metaTheme = document.createElement('meta');
@@ -116,18 +96,7 @@ const StyleInjector = () => {
       }
       metaTheme.content = '#09090b';
     };
-
-    setFaviconAndManifest();
-    
-    // 5. REGISTRAR SERVICE WORKER (Esencial para instalar)
-    if ('serviceWorker' in navigator) {
-      window.addEventListener('load', () => {
-        navigator.serviceWorker.register('/sw.js').then(
-          (registration) => console.log('SW registrado con éxito: ', registration.scope),
-          (err) => console.log('SW fallo al registrarse: ', err)
-        );
-      });
-    }
+    setMetaTags();
     
     document.title = "CaloTrack - Ernesto Edition";
 
@@ -136,81 +105,69 @@ const StyleInjector = () => {
   return null;
 };
 
-// --- BASE DE DATOS AMPLIADA (50+ Alimentos) ---
+// --- BASE DE DATOS INICIAL ---
 const COMMON_FOODS: FoodItemDB[] = [
   // Proteínas
   { name: 'Pechuga de Pollo (Cocida)', unit: 'g', calPerUnit: 1.65 },
-  { name: 'Carne de Res (Magra/Bistec)', unit: 'g', calPerUnit: 2.50 },
-  { name: 'Carne Molida (5% grasa)', unit: 'g', calPerUnit: 1.37 },
+  { name: 'Carne de Res (Magra)', unit: 'g', calPerUnit: 2.50 },
+  { name: 'Carne Molida (5%)', unit: 'g', calPerUnit: 1.37 },
   { name: 'Chuleta de Cerdo', unit: 'g', calPerUnit: 2.31 },
-  { name: 'Pescado Blanco (Tilapia/Merluza)', unit: 'g', calPerUnit: 0.96 },
+  { name: 'Pescado Blanco', unit: 'g', calPerUnit: 0.96 },
   { name: 'Salmón (Cocido)', unit: 'g', calPerUnit: 2.08 },
-  { name: 'Atún en Agua (Drenado)', unit: 'g', calPerUnit: 1.16 },
-  { name: 'Huevo Grande (Hervido/Poaché)', unit: 'unidad', calPerUnit: 78 },
+  { name: 'Atún en Agua', unit: 'g', calPerUnit: 1.16 },
+  { name: 'Huevo (Hervido)', unit: 'unidad', calPerUnit: 78 },
   { name: 'Huevo Frito', unit: 'unidad', calPerUnit: 90 },
   { name: 'Claras de Huevo', unit: 'unidad', calPerUnit: 17 },
-  { name: 'Jamón de Pavo/Cocido', unit: 'rebanada', calPerUnit: 30 },
-
-  // Carbohidratos y Granos
-  { name: 'Arroz Blanco (Cocido)', unit: 'g', calPerUnit: 1.30 },
-  { name: 'Arroz Integral (Cocido)', unit: 'g', calPerUnit: 1.11 },
-  { name: 'Pasta / Espagueti (Cocido)', unit: 'g', calPerUnit: 1.31 },
+  { name: 'Jamón de Pavo', unit: 'rebanada', calPerUnit: 30 },
+  // Carbohidratos
+  { name: 'Arroz Blanco', unit: 'g', calPerUnit: 1.30 },
+  { name: 'Arroz Integral', unit: 'g', calPerUnit: 1.11 },
+  { name: 'Pasta / Espagueti', unit: 'g', calPerUnit: 1.31 },
   { name: 'Pan Blanco', unit: 'rebanada', calPerUnit: 67 },
   { name: 'Pan Integral', unit: 'rebanada', calPerUnit: 80 },
-  { name: 'Avena (Hojuelas Crudas)', unit: 'g', calPerUnit: 3.89 },
-  { name: 'Papa / Patata (Hervida)', unit: 'g', calPerUnit: 0.87 },
-  { name: 'Batata / Camote (Hervido)', unit: 'g', calPerUnit: 0.86 },
-  { name: 'Arepa de Maíz (Mediana/Sola)', unit: 'unidad', calPerUnit: 220 },
+  { name: 'Avena', unit: 'g', calPerUnit: 3.89 },
+  { name: 'Papa (Hervida)', unit: 'g', calPerUnit: 0.87 },
+  { name: 'Batata / Camote', unit: 'g', calPerUnit: 0.86 },
+  { name: 'Arepa de Maíz', unit: 'unidad', calPerUnit: 220 },
   { name: 'Tortilla de Maíz', unit: 'unidad', calPerUnit: 52 },
-  { name: 'Tortilla de Trigo', unit: 'unidad', calPerUnit: 140 },
-  { name: 'Frijoles / Caraotas (Cocidos)', unit: 'g', calPerUnit: 1.32 },
-  { name: 'Lentejas (Cocidas)', unit: 'g', calPerUnit: 1.16 },
-
-  // Grasas y Lácteos
+  { name: 'Frijoles / Caraotas', unit: 'g', calPerUnit: 1.32 },
+  // Grasas
   { name: 'Aceite de Oliva', unit: 'cucharada', calPerUnit: 119 },
-  { name: 'Aceite de Girasol/Maíz', unit: 'cucharada', calPerUnit: 120 },
   { name: 'Mantequilla', unit: 'cucharada', calPerUnit: 102 },
   { name: 'Palta / Aguacate', unit: 'g', calPerUnit: 1.60 },
-  { name: 'Maní / Cacahuates (Tostados)', unit: 'g', calPerUnit: 5.67 },
+  { name: 'Maní / Cacahuates', unit: 'g', calPerUnit: 5.67 },
   { name: 'Almendras', unit: 'g', calPerUnit: 5.79 },
-  { name: 'Nueces', unit: 'g', calPerUnit: 6.54 },
-  { name: 'Leche Entera', unit: 'ml', calPerUnit: 0.61 },
-  { name: 'Leche Descremada', unit: 'ml', calPerUnit: 0.34 },
-  { name: 'Yogur Griego Natural', unit: 'g', calPerUnit: 0.59 },
   { name: 'Queso Mozzarella', unit: 'g', calPerUnit: 2.80 },
-  { name: 'Queso Blanco Duro/Fresco', unit: 'g', calPerUnit: 3.00 },
-  { name: 'Queso Amarillo (Loncha)', unit: 'unidad', calPerUnit: 104 },
-
+  { name: 'Queso Blanco', unit: 'g', calPerUnit: 3.00 },
   // Frutas y Verduras
-  { name: 'Manzana (Mediana)', unit: 'unidad', calPerUnit: 95 },
-  { name: 'Banana / Cambur (Mediano)', unit: 'unidad', calPerUnit: 105 },
+  { name: 'Manzana', unit: 'unidad', calPerUnit: 95 },
+  { name: 'Banana / Cambur', unit: 'unidad', calPerUnit: 105 },
   { name: 'Naranja', unit: 'unidad', calPerUnit: 62 },
-  { name: 'Mandarina', unit: 'unidad', calPerUnit: 53 },
-  { name: 'Fresas / Frutillas', unit: 'g', calPerUnit: 0.32 },
-  { name: 'Uvas', unit: 'g', calPerUnit: 0.67 },
-  { name: 'Sandía / Patilla', unit: 'g', calPerUnit: 0.30 },
-  { name: 'Zanahoria (Cruda)', unit: 'g', calPerUnit: 0.41 },
-  { name: 'Brócoli (Cocido)', unit: 'g', calPerUnit: 0.35 },
+  { name: 'Fresas', unit: 'g', calPerUnit: 0.32 },
+  { name: 'Zanahoria', unit: 'g', calPerUnit: 0.41 },
+  { name: 'Brócoli', unit: 'g', calPerUnit: 0.35 },
   { name: 'Tomate', unit: 'g', calPerUnit: 0.18 },
   { name: 'Lechuga', unit: 'g', calPerUnit: 0.15 },
-
-  // Snacks, Comida Rápida y Otros
-  { name: 'Tequeño de Queso (Frito)', unit: 'unidad', calPerUnit: 320 },
-  { name: 'Empanada de Carne (Frita)', unit: 'unidad', calPerUnit: 350 },
-  { name: 'Pizza (Rebanada Pepperoni)', unit: 'unidad', calPerUnit: 290 },
-  { name: 'Hamburguesa (Con Queso, genérica)', unit: 'unidad', calPerUnit: 540 },
-  { name: 'Papas Fritas (Porción Mediana)', unit: 'unidad', calPerUnit: 365 },
-  { name: 'Galleta (Tipo María)', unit: 'unidad', calPerUnit: 24 },
-  { name: 'Chocolate Negro (Cuadrito/10g)', unit: 'unidad', calPerUnit: 55 },
-  { name: 'Cerveza (Lata 355ml)', unit: 'unidad', calPerUnit: 153 },
-  { name: 'Coca-Cola / Refresco (Lata)', unit: 'unidad', calPerUnit: 140 },
-  { name: 'Café con Leche y Azúcar', unit: 'taza', calPerUnit: 80 },
-  { name: 'Mayonesa', unit: 'cucharada', calPerUnit: 94 },
-  { name: 'Ketchup / Salsa de Tomate', unit: 'cucharada', calPerUnit: 19 },
+  // Snacks
+  { name: 'Tequeño (Frito)', unit: 'unidad', calPerUnit: 320 },
+  { name: 'Empanada Carne', unit: 'unidad', calPerUnit: 350 },
+  { name: 'Pizza (Pepperoni)', unit: 'unidad', calPerUnit: 290 },
+  { name: 'Hamburguesa', unit: 'unidad', calPerUnit: 540 },
+  { name: 'Papas Fritas', unit: 'unidad', calPerUnit: 365 },
+  { name: 'Chocolate Negro', unit: 'unidad', calPerUnit: 55 },
+  { name: 'Cerveza', unit: 'unidad', calPerUnit: 153 },
+  { name: 'Coca-Cola', unit: 'unidad', calPerUnit: 140 },
+  { name: 'Café con Leche', unit: 'taza', calPerUnit: 80 },
 ];
 
 // --- UTILIDADES ---
-const getTodayStr = (): string => new Date().toLocaleDateString('en-CA'); 
+const getTodayStr = (): string => {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = String(now.getMonth() + 1).padStart(2, '0');
+  const day = String(now.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+};
 
 const getMonday = (d: Date): Date => {
   const date = new Date(d);
@@ -224,12 +181,16 @@ const getWeekDays = (mondayDate: Date): string[] => {
   for (let i = 0; i < 7; i++) {
     const nextDay = new Date(mondayDate);
     nextDay.setDate(mondayDate.getDate() + i);
-    week.push(nextDay.toLocaleDateString('en-CA'));
+    
+    const year = nextDay.getFullYear();
+    const month = String(nextDay.getMonth() + 1).padStart(2, '0');
+    const day = String(nextDay.getDate()).padStart(2, '0');
+    week.push(`${year}-${month}-${day}`);
   }
   return week;
 };
 
-// --- COMPONENTES UI (Tipados) ---
+// --- COMPONENTES UI ---
 
 interface ButtonProps extends React.ButtonHTMLAttributes<HTMLButtonElement> {
   variant?: 'primary' | 'secondary' | 'outline' | 'ghost';
@@ -292,37 +253,37 @@ const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => void }) =>
       <div className="absolute -top-20 -right-20 w-64 h-64 bg-emerald-500/10 rounded-full blur-3xl" />
       <div className="absolute top-40 -left-20 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl" />
 
-      <div className="mb-12 text-center">
-        {/* LOGO CONTAINER: Totalmente transparente */}
-        <div className="w-32 h-32 mx-auto flex items-center justify-center mb-6">
-          <img 
-            src="/logo.jpg" 
-            alt="CaloTrack Logo" 
-            className="w-full h-full object-contain drop-shadow-2xl" 
-          />
+      <div className="mb-12 text-center z-10">
+        <div className="w-32 h-32 mx-auto flex items-center justify-center mb-6 bg-zinc-900 rounded-full shadow-2xl shadow-emerald-500/10 border border-zinc-800">
+           <Flame size={64} className="text-emerald-500" />
         </div>
         <h1 className="text-5xl font-extrabold text-white mb-2 tracking-tight">QUE CALOR IA</h1>
         <p className="text-zinc-400 text-lg">Anota todo lo que comes, dale</p>
       </div>
 
-      <div className="w-full max-w-sm space-y-4">
+      <div className="w-full max-w-sm space-y-4 z-10">
         <Button onClick={() => onNavigate('setup')} variant="secondary" className="bg-zinc-900 border-zinc-800">
           <User size={24} className="text-emerald-500" />
           Configurar Perfil
         </Button>
 
-        <Button onClick={() => onNavigate('calendar')} variant="primary">
-          <CalendarIcon size={24} />
-          Ingresar Calorías
+        <Button onClick={() => onNavigate('dailylog')} variant="primary">
+          <Utensils size={24} />
+          Registro de Hoy
+        </Button>
+
+        <Button onClick={() => onNavigate('calendar')} variant="secondary" className="bg-zinc-900 border-zinc-800">
+          <CalendarIcon size={24} className="text-zinc-400" />
+          Calendario
         </Button>
         
-        <Button onClick={() => onNavigate('goals')} variant="secondary" className="bg-zinc-900 border-zinc-800">
-          <Target size={24} className="text-emerald-500" />
+        <Button onClick={() => onNavigate('goals')} variant="outline">
+          <Target size={24} />
           Objetivo Semanal
         </Button>
       </div>
 
-      <p className="mt-12 text-zinc-600 text-sm">v2.0.0 • Ernesto Edition (PWA)</p>
+      <p className="mt-12 text-zinc-600 text-sm z-10">v2.2.0 • Ernesto Edition</p>
     </div>
   );
 };
@@ -363,39 +324,12 @@ const WeeklyGoalView: React.FC<WeeklyGoalProps> = ({ user, allLogs, onBack }) =>
   });
 
   const progressPercent = Math.min((currentWeekConsumed / weeklyTarget) * 100, 100);
-
-  const historyWeeks = [];
-  for (let i = 1; i <= 4; i++) {
-    const pastMonday = new Date(currentMonday);
-    pastMonday.setDate(currentMonday.getDate() - (i * 7));
-    const pastWeekDays = getWeekDays(pastMonday);
-    let weeklySum = 0;
-    pastWeekDays.forEach(d => {
-      const logs = allLogs[d] || [];
-      weeklySum += logs.reduce((acc, item) => acc + item.calories, 0);
-    });
-
-    let status = 'neutral';
-    if (weeklySum === 0) status = 'no_data';
-    else if (user && user.goal === 'lose') status = weeklySum <= weeklyTarget ? 'success' : 'fail';
-    else if (user && user.goal === 'gain') status = weeklySum >= weeklyTarget ? 'success' : 'fail';
-    else status = (weeklySum >= weeklyTarget * 0.9 && weeklySum <= weeklyTarget * 1.1) ? 'success' : 'fail';
-
-    historyWeeks.push({
-      startDate: pastMonday,
-      endDate: new Date(pastWeekDays[6]),
-      total: weeklySum,
-      target: weeklyTarget,
-      status
-    });
-  }
-
   const dayLabels = ['L', 'M', 'M', 'J', 'V', 'S', 'D'];
 
   return (
-    <div className="min-h-screen bg-zinc-950 p-6 flex flex-col">
+    <div className="min-h-screen bg-zinc-950 p-6 flex flex-col max-w-lg mx-auto">
        <div className="flex items-center gap-4 mb-8">
-        <button onClick={onBack} className="p-2 bg-zinc-900 rounded-full text-zinc-400 hover:text-white">
+        <button onClick={onBack} className="p-2 bg-zinc-900 rounded-full text-zinc-400 hover:text-white transition-colors">
           <ArrowLeft size={24} />
         </button>
         <h1 className="text-2xl font-bold text-white">Progreso Semanal</h1>
@@ -408,10 +342,6 @@ const WeeklyGoalView: React.FC<WeeklyGoalProps> = ({ user, allLogs, onBack }) =>
         
         <div className="relative z-10">
           <p className="text-zinc-400 text-sm font-medium uppercase tracking-wider mb-1">Semana Actual</p>
-          <h2 className="text-white text-lg font-semibold mb-4">
-            {currentMonday.getDate()} {currentMonday.toLocaleString('es-ES', { month: 'short' })} - {new Date(currentWeekDays[6]).getDate()} {new Date(currentWeekDays[6]).toLocaleString('es-ES', { month: 'short' })}
-          </h2>
-
           <div className="flex items-end gap-2 mb-2">
             <span className="text-4xl font-bold text-white">{currentWeekConsumed.toLocaleString()}</span>
             <span className="text-zinc-500 mb-1">/ {weeklyTarget.toLocaleString()} kcal</span>
@@ -426,7 +356,7 @@ const WeeklyGoalView: React.FC<WeeklyGoalProps> = ({ user, allLogs, onBack }) =>
 
           <div className="grid grid-cols-7 gap-2 h-24 items-end">
             {currentWeekData.map((dayData, idx) => {
-              const dayHeight = Math.min((dayData.total / dailyTarget) * 100, 100);
+              const dayHeight = Math.min((dayData.total / (dailyTarget * 1.2)) * 100, 100);
               const isOver = dayData.total > dailyTarget;
               const isToday = dayData.date === getTodayStr();
               
@@ -434,7 +364,7 @@ const WeeklyGoalView: React.FC<WeeklyGoalProps> = ({ user, allLogs, onBack }) =>
                 <div key={idx} className="flex flex-col items-center gap-2 h-full justify-end">
                   <div className="w-full relative bg-zinc-950 rounded-t-lg h-full flex items-end overflow-hidden">
                     <div 
-                      className={`w-full transition-all ${isOver ? 'bg-red-500/80' : 'bg-emerald-500/80'} ${dayData.total === 0 ? 'bg-transparent' : ''}`}
+                      className={`w-full rounded-t-sm transition-all ${isOver ? 'bg-red-500/80' : 'bg-emerald-500/80'} ${dayData.total === 0 ? 'bg-transparent' : ''}`}
                       style={{ height: `${dayHeight}%` }}
                     />
                   </div>
@@ -446,34 +376,14 @@ const WeeklyGoalView: React.FC<WeeklyGoalProps> = ({ user, allLogs, onBack }) =>
         </div>
       </div>
 
-      <h3 className="text-zinc-400 font-bold mb-4 flex items-center gap-2">
-        <History size={18} /> Semanas Anteriores
-      </h3>
-      
-      <div className="space-y-3">
-        {historyWeeks.map((week, idx) => (
-          <div key={idx} className="bg-zinc-900/50 border border-zinc-800 p-4 rounded-xl flex items-center justify-between">
-            <div>
-              <p className="text-zinc-300 font-medium text-sm">
-                {week.startDate.getDate()}/{week.startDate.getMonth()+1} - {week.endDate.getDate()}/{week.endDate.getMonth()+1}
-              </p>
-              {week.status !== 'no_data' ? (
-                <p className="text-xs text-zinc-500 mt-1">
-                  {week.total.toLocaleString()} / {week.target.toLocaleString()} kcal
-                </p>
-              ) : (
-                <p className="text-xs text-zinc-600 italic mt-1">Sin registros</p>
-              )}
-            </div>
-            
-            <div className="flex items-center">
-              {week.status === 'success' && <div className="text-emerald-500 flex items-center gap-1 bg-emerald-500/10 px-3 py-1 rounded-full"><CheckCircle2 size={16}/> <span className="text-xs font-bold">Logrado</span></div>}
-              {week.status === 'fail' && <div className="text-red-500 flex items-center gap-1 bg-red-500/10 px-3 py-1 rounded-full"><XCircle size={16}/> <span className="text-xs font-bold">Fallido</span></div>}
-              {week.status === 'neutral' && <span className="text-zinc-600">-</span>}
-              {week.status === 'no_data' && <span className="text-zinc-700 text-xs">-</span>}
-            </div>
-          </div>
-        ))}
+      <div className="bg-zinc-900/50 border border-zinc-800 p-4 rounded-xl flex items-center gap-4">
+        <div className="p-3 bg-zinc-800 rounded-full text-emerald-500">
+          <CheckCircle2 size={24} />
+        </div>
+        <div>
+          <h4 className="font-bold text-white">Objetivo Diario</h4>
+          <p className="text-sm text-zinc-400">{dailyTarget.toLocaleString()} kcal para {user?.goal === 'lose' ? 'perder peso' : user?.goal === 'gain' ? 'ganar masa' : 'mantenerte'}.</p>
+        </div>
       </div>
     </div>
   );
@@ -496,19 +406,18 @@ const CalendarView: React.FC<CalendarProps> = ({ onSelectDate, onBack }) => {
   const isCurrentMonth = today.getMonth() === month && today.getFullYear() === year;
 
   const handleDayClick = (day: number) => {
-    const clickedDate = new Date(year, month, day);
-    const offset = clickedDate.getTimezoneOffset();
-    const dateLocal = new Date(clickedDate.getTime() - (offset*60*1000));
-    const dateStr = dateLocal.toISOString().split('T')[0];
+    const mStr = String(month + 1).padStart(2, '0');
+    const dStr = String(day).padStart(2, '0');
+    const dateStr = `${year}-${mStr}-${dStr}`;
     onSelectDate(dateStr);
   };
 
   const monthNames = ["Enero", "Febrero", "Marzo", "Abril", "Mayo", "Junio", "Julio", "Agosto", "Septiembre", "Octubre", "Noviembre", "Diciembre"];
 
   return (
-    <div className="min-h-screen bg-zinc-950 p-6 flex flex-col">
+    <div className="min-h-screen bg-zinc-950 p-6 flex flex-col max-w-lg mx-auto">
       <div className="flex items-center justify-between mb-8">
-        <button onClick={onBack} className="p-2 bg-zinc-900 rounded-full text-zinc-400 hover:text-white">
+        <button onClick={onBack} className="p-2 bg-zinc-900 rounded-full text-zinc-400 hover:text-white transition-colors">
           <ArrowLeft size={24} />
         </button>
         <h2 className="text-2xl font-bold text-white capitalize">
@@ -585,7 +494,7 @@ const UserSetup: React.FC<UserSetupProps> = ({ userData, onSave, onBack }) => {
     <div className="animate-fade-in p-6 max-w-md mx-auto min-h-screen flex flex-col">
       <div className="flex items-center gap-4 mb-8 pt-4">
         {onBack && (
-          <button onClick={onBack} className="p-2 bg-zinc-900 rounded-full text-zinc-400 hover:text-white">
+          <button onClick={onBack} className="p-2 bg-zinc-900 rounded-full text-zinc-400 hover:text-white transition-colors">
             <ArrowLeft size={20} />
           </button>
         )}
@@ -615,19 +524,33 @@ const UserSetup: React.FC<UserSetupProps> = ({ userData, onSave, onBack }) => {
 interface AddFoodProps {
   onClose: () => void;
   onAdd: (item: LogItem) => void;
+  foodDatabase: FoodItemDB[]; // Recibe la DB dinámica
+  onSaveNewFood: (newFood: FoodItemDB) => void; // Función para guardar en DB
 }
 
-const AddFoodModal: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
+const AddFoodModal: React.FC<AddFoodProps> = ({ onClose, onAdd, foodDatabase, onSaveNewFood }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFood, setSelectedFood] = useState<FoodItemDB | null>(null);
   const [amount, setAmount] = useState('');
   const [mode, setMode] = useState<'search' | 'manual'>('search');
 
-  const filteredFoods = useMemo(() => {
-    return COMMON_FOODS.filter(f => f.name.toLowerCase().includes(searchTerm.toLowerCase()));
-  }, [searchTerm]);
+  // Estado para el modo manual extendido
+  const [manualName, setManualName] = useState('');
+  const [manualTotalCals, setManualTotalCals] = useState('');
+  const [manualAmount, setManualAmount] = useState('');
+  const [manualUnit, setManualUnit] = useState('');
+  const [saveToDB, setSaveToDB] = useState(false);
 
-  const handleAdd = () => {
+  const filteredFoods = useMemo(() => {
+    const normalizeText = (text: string) => {
+      return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
+    };
+    const term = normalizeText(searchTerm);
+    // Usamos foodDatabase (que incluye los customs)
+    return foodDatabase.filter(f => normalizeText(f.name).includes(term));
+  }, [searchTerm, foodDatabase]);
+
+  const handleAddSearch = () => {
     if (selectedFood && amount) {
       const cals = Math.round(selectedFood.calPerUnit * parseFloat(amount));
       onAdd({ name: selectedFood.name, amount: parseFloat(amount), unit: selectedFood.unit, calories: cals });
@@ -635,8 +558,36 @@ const AddFoodModal: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
     }
   };
 
-  const handleManualAdd = (manualData: LogItem) => {
-    onAdd(manualData);
+  const handleManualSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!manualName || !manualTotalCals) return;
+
+    const totalCals = parseInt(manualTotalCals);
+    // Si no pone cantidad, asumimos 1 porción
+    const finalAmount = manualAmount ? parseFloat(manualAmount) : 1;
+    const finalUnit = manualUnit || 'porción';
+
+    // Agregar al log de hoy
+    onAdd({
+      name: manualName,
+      amount: finalAmount,
+      unit: finalUnit,
+      calories: totalCals
+    });
+
+    // Guardar en la base de datos si el usuario quiere
+    if (saveToDB) {
+      // Calculamos calorias por unidad
+      const calPerUnit = totalCals / finalAmount;
+      
+      onSaveNewFood({
+        name: manualName,
+        unit: finalUnit,
+        calPerUnit: parseFloat(calPerUnit.toFixed(2)),
+        isCustom: true
+      });
+    }
+
     onClose();
   };
 
@@ -647,10 +598,12 @@ const AddFoodModal: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
           <h2 className="text-lg font-bold text-white">Agregar Alimento</h2>
           <button onClick={onClose} className="text-zinc-400 hover:text-white p-2">✕</button>
         </div>
+        
         <div className="flex p-2 gap-2 bg-zinc-950/30">
           <button onClick={() => setMode('search')} className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${mode === 'search' ? 'bg-zinc-800 text-white' : 'text-zinc-500'}`}>Buscar</button>
           <button onClick={() => setMode('manual')} className={`flex-1 py-2 rounded-lg text-sm font-medium transition-colors ${mode === 'manual' ? 'bg-zinc-800 text-white' : 'text-zinc-500'}`}>Manual</button>
         </div>
+        
         <div className="p-4 min-h-[300px]">
           {mode === 'search' ? (
             <>
@@ -663,10 +616,18 @@ const AddFoodModal: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
                   <div className="space-y-2 max-h-[250px] overflow-y-auto custom-scrollbar">
                     {filteredFoods.map((food, idx) => (
                       <button key={idx} onClick={() => setSelectedFood(food)} className="w-full text-left p-3 rounded-xl hover:bg-zinc-800 flex justify-between items-center group transition-colors">
-                        <span className="text-zinc-200">{food.name}</span>
+                        <div className="flex flex-col">
+                          <span className="text-zinc-200 font-medium">{food.name}</span>
+                          {food.isCustom && <span className="text-[10px] text-emerald-500/80 uppercase font-bold tracking-wider">Guardado por ti</span>}
+                        </div>
                         <span className="text-xs text-zinc-500 group-hover:text-emerald-400">{food.calPerUnit} cal/{food.unit}</span>
                       </button>
                     ))}
+                    {filteredFoods.length === 0 && (
+                       <div className="text-center text-zinc-500 py-4 text-sm">
+                         No encontrado. ¿Prueba en Manual?
+                       </div>
+                    )}
                   </div>
                 </>
               ) : (
@@ -679,24 +640,79 @@ const AddFoodModal: React.FC<AddFoodProps> = ({ onClose, onAdd }) => {
                     <span className="text-zinc-400">Total Calorías:</span>
                     <span className="text-2xl font-bold text-white">{amount ? Math.round(selectedFood.calPerUnit * parseFloat(amount)) : 0}</span>
                   </div>
-                  <Button onClick={handleAdd}>Agregar</Button>
+                  <Button onClick={handleAddSearch}>Agregar</Button>
                 </div>
               )}
             </>
           ) : (
-             <form onSubmit={(e) => { 
-                e.preventDefault(); 
-                const fd = new FormData(e.currentTarget); // Corregido para TS
-                handleManualAdd({ 
-                  name: fd.get('name') as string, 
-                  amount: 1, 
-                  unit: 'porción', 
-                  calories: parseInt(fd.get('cals') as string) 
-                }) 
-              }} className="animate-fade-in">
-               <Input label="Nombre" name="name" required placeholder="Ej. Hamburguesa" />
-               <Input label="Calorías" name="cals" type="number" required placeholder="500" />
-               <Button type="submit" className="mt-4">Guardar</Button>
+             <form onSubmit={handleManualSubmit} className="animate-fade-in flex flex-col h-full">
+               <div className="space-y-3">
+                 <Input 
+                    label="Nombre del Alimento" 
+                    value={manualName} 
+                    onChange={e => setManualName(e.target.value)} 
+                    required 
+                    placeholder="Ej. Sándwich Casero" 
+                 />
+                 
+                 <Input 
+                    label="Calorías Totales (lo que vas a comer)" 
+                    value={manualTotalCals} 
+                    onChange={e => setManualTotalCals(e.target.value)} 
+                    type="number" 
+                    required 
+                    placeholder="Ej. 450" 
+                 />
+
+                 <div className="p-4 bg-zinc-950/50 rounded-xl border border-zinc-800 space-y-3">
+                    <p className="text-xs font-bold text-emerald-500 uppercase flex items-center gap-2">
+                       <Save size={12} /> Opcional: Guardar en Base de Datos
+                    </p>
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs font-medium text-zinc-500 mb-1">Cantidad</label>
+                        <input 
+                          className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+                          placeholder="Ej. 100 o 1"
+                          type="number"
+                          value={manualAmount}
+                          onChange={e => setManualAmount(e.target.value)}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-zinc-500 mb-1">Unidad</label>
+                        <input 
+                          className="w-full bg-zinc-900 border border-zinc-700 rounded-lg px-3 py-2 text-sm text-white focus:outline-none focus:border-emerald-500"
+                          placeholder="Ej. g, ml, pieza"
+                          value={manualUnit}
+                          onChange={e => setManualUnit(e.target.value)}
+                        />
+                      </div>
+                    </div>
+                    
+                    <div className="flex items-center gap-3 pt-1">
+                      <input 
+                        type="checkbox" 
+                        id="saveDB" 
+                        checked={saveToDB} 
+                        onChange={e => setSaveToDB(e.target.checked)}
+                        className="w-5 h-5 rounded border-zinc-700 bg-zinc-900 text-emerald-500 focus:ring-emerald-500"
+                      />
+                      <label htmlFor="saveDB" className="text-sm text-zinc-300 cursor-pointer select-none">
+                        Guardar en mis alimentos frecuentes
+                      </label>
+                    </div>
+                    {saveToDB && (
+                      <p className="text-[10px] text-zinc-500 leading-tight">
+                        Se guardará como: <span className="text-zinc-300">{manualName}</span> con <span className="text-zinc-300">{(manualTotalCals && manualAmount) ? (parseInt(manualTotalCals) / parseFloat(manualAmount)).toFixed(2) : '?'} cal</span> por <span className="text-zinc-300">{manualUnit || 'unidad'}</span>.
+                      </p>
+                    )}
+                 </div>
+               </div>
+               
+               <div className="mt-6">
+                 <Button type="submit">Agregar Alimento</Button>
+               </div>
              </form>
           )}
         </div>
@@ -713,9 +729,11 @@ interface DailyLogProps {
   onAddFood: (item: LogItem) => void;
   onDeleteFood: (index: number) => void;
   onBack: () => void;
+  foodDatabase: FoodItemDB[]; // Pasamos la DB
+  onSaveNewFood: (newFood: FoodItemDB) => void; // Pasamos la función de guardar
 }
 
-const DailyLogView: React.FC<DailyLogProps> = ({ user, log, dateStr, onAddFood, onDeleteFood, onBack }) => {
+const DailyLogView: React.FC<DailyLogProps> = ({ user, log, dateStr, onAddFood, onDeleteFood, onBack, foodDatabase, onSaveNewFood }) => {
   const [showAddModal, setShowAddModal] = useState(false);
 
   const calculateTargets = () => {
@@ -738,17 +756,18 @@ const DailyLogView: React.FC<DailyLogProps> = ({ user, log, dateStr, onAddFood, 
   const remainingCalories = targetCalories - consumedCalories;
   const progress = Math.min((consumedCalories / targetCalories) * 100, 100);
 
+  // Formato de fecha
   const [y, m, d] = dateStr.split('-');
   const dateObj = new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
   const dateDisplay = dateObj.toLocaleDateString('es-ES', { weekday: 'long', day: 'numeric', month: 'long' });
 
   return (
-    <div className="min-h-screen bg-zinc-950 pb-24 relative overflow-hidden">
+    <div className="min-h-screen bg-zinc-950 pb-24 relative overflow-hidden max-w-lg mx-auto">
       <div className="absolute top-0 left-0 w-full h-96 bg-gradient-to-b from-zinc-900 to-zinc-950 -z-10" />
 
       {/* Header */}
       <div className="px-4 pt-8 pb-4 flex items-center gap-4">
-        <button onClick={onBack} className="p-2 bg-zinc-900/50 rounded-full text-zinc-200 border border-zinc-800">
+        <button onClick={onBack} className="p-2 bg-zinc-900/50 rounded-full text-zinc-200 border border-zinc-800 transition-colors hover:bg-zinc-800">
           <ArrowLeft size={20} />
         </button>
         <div className="flex-1">
@@ -784,7 +803,6 @@ const DailyLogView: React.FC<DailyLogProps> = ({ user, log, dateStr, onAddFood, 
                   <path className={progress > 100 ? "text-red-500" : "text-emerald-500"} strokeDasharray={`${progress}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" />
                 </svg>
                 <div className="absolute inset-0 flex items-center justify-center flex-col">
-                  {/* Aquí se usa el componente Flame que daba error */}
                   <Flame size={20} className={progress > 100 ? "text-red-500" : "text-emerald-500"} fill="currentColor" />
                 </div>
             </div>
@@ -820,7 +838,7 @@ const DailyLogView: React.FC<DailyLogProps> = ({ user, log, dateStr, onAddFood, 
                 </div>
                 <div className="flex items-center gap-4">
                   <span className="font-bold text-white">{item.calories} <span className="text-xs font-normal text-zinc-500">kcal</span></span>
-                  <button onClick={() => onDeleteFood(index)} className="p-2 text-zinc-600 hover:text-red-400 rounded-lg"><Trash2 size={16} /></button>
+                  <button onClick={() => onDeleteFood(index)} className="p-2 text-zinc-600 hover:text-red-400 rounded-lg transition-colors"><Trash2 size={16} /></button>
                 </div>
               </div>
             ))
@@ -834,22 +852,41 @@ const DailyLogView: React.FC<DailyLogProps> = ({ user, log, dateStr, onAddFood, 
           </button>
       </div>
 
-      {showAddModal && <AddFoodModal onClose={() => setShowAddModal(false)} onAdd={onAddFood} />}
+      {showAddModal && (
+        <AddFoodModal 
+          onClose={() => setShowAddModal(false)} 
+          onAdd={onAddFood} 
+          foodDatabase={foodDatabase} 
+          onSaveNewFood={onSaveNewFood}
+        />
+      )}
     </div>
   );
 };
 
 // --- COMPONENTE RAÍZ ---
 export default function App() {
-  const [view, setView] = useState('loading'); // loading, setup, home, calendar, dailylog, goals
+  const [view, setView] = useState('loading'); 
   const [userData, setUserData] = useState<UserData | null>(null);
   const [allLogs, setAllLogs] = useState<LogsMap>({});
   const [selectedDate, setSelectedDate] = useState(getTodayStr());
+
+  // ESTADO NUEVO: Base de datos de alimentos dinámica
+  const [foodDatabase, setFoodDatabase] = useState<FoodItemDB[]>(COMMON_FOODS);
 
   // Cargar datos
   useEffect(() => {
     const savedUser = localStorage.getItem('calotrack_user');
     const savedAllLogs = localStorage.getItem('calotrack_all_logs');
+    
+    // Cargar alimentos personalizados
+    const savedCustomFoods = localStorage.getItem('calotrack_custom_foods');
+    let mergedFoods = [...COMMON_FOODS];
+    if (savedCustomFoods) {
+      const customFoods = JSON.parse(savedCustomFoods);
+      mergedFoods = [...COMMON_FOODS, ...customFoods];
+    }
+    setFoodDatabase(mergedFoods);
     
     // Migración simple para versión antigua
     const legacyLog = localStorage.getItem('calotrack_log');
@@ -867,9 +904,7 @@ export default function App() {
       setUserData(JSON.parse(savedUser));
     }
     
-    // CAMBIO: Siempre ir al HOME, tenga datos o no
     setView('home'); 
-
   }, []);
 
   // Guardar logs
@@ -883,6 +918,16 @@ export default function App() {
     setUserData(data);
     localStorage.setItem('calotrack_user', JSON.stringify(data));
     setView('home');
+  };
+
+  // NUEVA FUNCIÓN: Guardar nuevo alimento
+  const handleSaveNewFood = (newFood: FoodItemDB) => {
+    const updatedDB = [...foodDatabase, newFood];
+    setFoodDatabase(updatedDB);
+    
+    // Guardamos SOLO los customs en localStorage para no duplicar COMMON_FOODS
+    const customFoods = updatedDB.filter(f => f.isCustom);
+    localStorage.setItem('calotrack_custom_foods', JSON.stringify(customFoods));
   };
 
   const currentLog = allLogs[selectedDate] || [];
@@ -905,11 +950,14 @@ export default function App() {
 
   return (
     <div className="font-sans text-zinc-100 bg-zinc-950 min-h-screen selection:bg-emerald-500/30">
-      <StyleInjector /> {/* Inyector automático de estilos y fuente */}
+      <StyleInjector />
       
       {view === 'home' && (
         <HomeScreen 
-          onNavigate={(screen) => setView(screen)} 
+          onNavigate={(screen) => {
+            if (screen === 'dailylog') setSelectedDate(getTodayStr());
+            setView(screen);
+          }} 
         />
       )}
 
@@ -939,6 +987,8 @@ export default function App() {
           onAddFood={handleAddFood} 
           onDeleteFood={handleDeleteFood}
           onBack={() => setView('calendar')}
+          foodDatabase={foodDatabase}
+          onSaveNewFood={handleSaveNewFood}
         />
       )}
 

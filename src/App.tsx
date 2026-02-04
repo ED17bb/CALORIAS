@@ -11,9 +11,7 @@ import {
   Search,
   Calendar as CalendarIcon,
   Target,
-  History,
   CheckCircle2,
-  XCircle,
   Save
 } from 'lucide-react';
 

@@ -12,7 +12,9 @@ import {
   Calendar as CalendarIcon,
   Target,
   CheckCircle2,
-  Save
+  Save,
+  Scale,
+  PieChart
 } from 'lucide-react';
 
 // --- INTERFACES ---
@@ -20,7 +22,8 @@ interface FoodItemDB {
   name: string;
   unit: string;
   calPerUnit: number;
-  isCustom?: boolean; // Para identificar si fue creado por el usuario
+  stdPortion?: number; // Cantidad que representa una "porción estándar" (ej. 150g)
+  isCustom?: boolean;
 }
 
 interface LogItem {
@@ -103,59 +106,88 @@ const StyleInjector = () => {
   return null;
 };
 
-// --- BASE DE DATOS INICIAL ---
+// --- BASE DE DATOS INICIAL CON PORCIONES ESTÁNDAR ---
 const COMMON_FOODS: FoodItemDB[] = [
-  // Proteínas
-  { name: 'Pechuga de Pollo (Cocida)', unit: 'g', calPerUnit: 1.65 },
-  { name: 'Carne de Res (Magra)', unit: 'g', calPerUnit: 2.50 },
-  { name: 'Carne Molida (5%)', unit: 'g', calPerUnit: 1.37 },
-  { name: 'Chuleta de Cerdo', unit: 'g', calPerUnit: 2.31 },
-  { name: 'Pescado Blanco', unit: 'g', calPerUnit: 0.96 },
-  { name: 'Salmón (Cocido)', unit: 'g', calPerUnit: 2.08 },
-  { name: 'Atún en Agua', unit: 'g', calPerUnit: 1.16 },
-  { name: 'Huevo (Hervido)', unit: 'unidad', calPerUnit: 78 },
-  { name: 'Huevo Frito', unit: 'unidad', calPerUnit: 90 },
-  { name: 'Claras de Huevo', unit: 'unidad', calPerUnit: 17 },
-  { name: 'Jamón de Pavo', unit: 'rebanada', calPerUnit: 30 },
-  // Carbohidratos
-  { name: 'Arroz Blanco', unit: 'g', calPerUnit: 1.30 },
-  { name: 'Arroz Integral', unit: 'g', calPerUnit: 1.11 },
-  { name: 'Pasta / Espagueti', unit: 'g', calPerUnit: 1.31 },
-  { name: 'Pan Blanco', unit: 'rebanada', calPerUnit: 67 },
-  { name: 'Pan Integral', unit: 'rebanada', calPerUnit: 80 },
-  { name: 'Avena', unit: 'g', calPerUnit: 3.89 },
-  { name: 'Papa (Hervida)', unit: 'g', calPerUnit: 0.87 },
-  { name: 'Batata / Camote', unit: 'g', calPerUnit: 0.86 },
-  { name: 'Arepa de Maíz', unit: 'unidad', calPerUnit: 220 },
-  { name: 'Tortilla de Maíz', unit: 'unidad', calPerUnit: 52 },
-  { name: 'Frijoles / Caraotas', unit: 'g', calPerUnit: 1.32 },
-  // Grasas
-  { name: 'Aceite de Oliva', unit: 'cucharada', calPerUnit: 119 },
-  { name: 'Mantequilla', unit: 'cucharada', calPerUnit: 102 },
-  { name: 'Palta / Aguacate', unit: 'g', calPerUnit: 1.60 },
-  { name: 'Maní / Cacahuates', unit: 'g', calPerUnit: 5.67 },
-  { name: 'Almendras', unit: 'g', calPerUnit: 5.79 },
-  { name: 'Queso Mozzarella', unit: 'g', calPerUnit: 2.80 },
-  { name: 'Queso Blanco', unit: 'g', calPerUnit: 3.00 },
-  // Frutas y Verduras
-  { name: 'Manzana', unit: 'unidad', calPerUnit: 95 },
-  { name: 'Banana / Cambur', unit: 'unidad', calPerUnit: 105 },
-  { name: 'Naranja', unit: 'unidad', calPerUnit: 62 },
-  { name: 'Fresas', unit: 'g', calPerUnit: 0.32 },
-  { name: 'Zanahoria', unit: 'g', calPerUnit: 0.41 },
-  { name: 'Brócoli', unit: 'g', calPerUnit: 0.35 },
-  { name: 'Tomate', unit: 'g', calPerUnit: 0.18 },
-  { name: 'Lechuga', unit: 'g', calPerUnit: 0.15 },
-  // Snacks
-  { name: 'Tequeño (Frito)', unit: 'unidad', calPerUnit: 320 },
-  { name: 'Empanada Carne', unit: 'unidad', calPerUnit: 350 },
-  { name: 'Pizza (Pepperoni)', unit: 'unidad', calPerUnit: 290 },
-  { name: 'Hamburguesa', unit: 'unidad', calPerUnit: 540 },
-  { name: 'Papas Fritas', unit: 'unidad', calPerUnit: 365 },
-  { name: 'Chocolate Negro', unit: 'unidad', calPerUnit: 55 },
-  { name: 'Cerveza', unit: 'unidad', calPerUnit: 153 },
-  { name: 'Coca-Cola', unit: 'unidad', calPerUnit: 140 },
-  { name: 'Café con Leche', unit: 'taza', calPerUnit: 80 },
+  // --- ARGENTINA 🇦🇷 ---
+  { name: 'Milanesa de Carne (Frita)', unit: 'unidad', calPerUnit: 350, stdPortion: 1 },
+  { name: 'Milanesa de Pollo (Horno)', unit: 'unidad', calPerUnit: 220, stdPortion: 1 },
+  { name: 'Choripán (Clásico)', unit: 'unidad', calPerUnit: 450, stdPortion: 1 },
+  { name: 'Empanada Argentina (Carne)', unit: 'unidad', calPerUnit: 280, stdPortion: 1 },
+  { name: 'Empanada JyQ (Frita)', unit: 'unidad', calPerUnit: 310, stdPortion: 1 },
+  { name: 'Medialuna (Manteca)', unit: 'unidad', calPerUnit: 180, stdPortion: 1 },
+  { name: 'Medialuna (Grasa)', unit: 'unidad', calPerUnit: 140, stdPortion: 1 },
+  { name: 'Alfajor de Chocolate (Simple)', unit: 'unidad', calPerUnit: 250, stdPortion: 1 },
+  { name: 'Alfajor Triple', unit: 'unidad', calPerUnit: 450, stdPortion: 1 },
+  { name: 'Dulce de Leche', unit: 'cucharada', calPerUnit: 60, stdPortion: 1 },
+  { name: 'Provoleta (Rodaja)', unit: 'unidad', calPerUnit: 300, stdPortion: 1 },
+  { name: 'Matambre a la Pizza', unit: 'porción', calPerUnit: 420, stdPortion: 1 },
+  { name: 'Locro Criollo', unit: 'plato', calPerUnit: 550, stdPortion: 1 },
+  { name: 'Fainá', unit: 'porción', calPerUnit: 180, stdPortion: 1 },
+  { name: 'Sándwich de Miga (Simple)', unit: 'unidad', calPerUnit: 150, stdPortion: 1 },
+
+  // --- VENEZUELA 🇻🇪 ---
+  { name: 'Arepa Viuda (Sola)', unit: 'unidad', calPerUnit: 280, stdPortion: 1 },
+  { name: 'Arepa Reina Pepiada', unit: 'unidad', calPerUnit: 550, stdPortion: 1 },
+  { name: 'Arepa Pelúa (Carne/Queso)', unit: 'unidad', calPerUnit: 520, stdPortion: 1 },
+  { name: 'Arepa Sifrina', unit: 'unidad', calPerUnit: 580, stdPortion: 1 },
+  { name: 'Pabellón Criollo (Plato)', unit: 'plato', calPerUnit: 750, stdPortion: 1 },
+  { name: 'Cachapa con Queso', unit: 'unidad', calPerUnit: 450, stdPortion: 1 },
+  { name: 'Tequeño (Frito)', unit: 'unidad', calPerUnit: 320, stdPortion: 1 },
+  { name: 'Hallaca', unit: 'unidad', calPerUnit: 600, stdPortion: 1 },
+  { name: 'Pan de Jamón', unit: 'rebanada', calPerUnit: 280, stdPortion: 1 },
+  { name: 'Tajadas (Plátano Frito)', unit: 'porción', calPerUnit: 200, stdPortion: 1 },
+  { name: 'Pastelito Andino', unit: 'unidad', calPerUnit: 220, stdPortion: 1 },
+  { name: 'Empanada Venezolana (Carne Mechada)', unit: 'unidad', calPerUnit: 350, stdPortion: 1 },
+  { name: 'Patacón (Relleno)', unit: 'unidad', calPerUnit: 650, stdPortion: 1 },
+
+  // --- PROTEÍNAS GENERALES ---
+  { name: 'Pechuga de Pollo (Cocida)', unit: 'g', calPerUnit: 1.65, stdPortion: 150 },
+  { name: 'Carne de Res (Magra)', unit: 'g', calPerUnit: 2.50, stdPortion: 150 },
+  { name: 'Carne Molida (5%)', unit: 'g', calPerUnit: 1.37, stdPortion: 150 },
+  { name: 'Chuleta de Cerdo', unit: 'g', calPerUnit: 2.31, stdPortion: 150 },
+  { name: 'Pescado Blanco', unit: 'g', calPerUnit: 0.96, stdPortion: 200 },
+  { name: 'Salmón (Cocido)', unit: 'g', calPerUnit: 2.08, stdPortion: 150 },
+  { name: 'Atún en Agua', unit: 'g', calPerUnit: 1.16, stdPortion: 120 },
+  { name: 'Huevo (Hervido)', unit: 'unidad', calPerUnit: 78, stdPortion: 2 },
+  { name: 'Huevo Frito', unit: 'unidad', calPerUnit: 90, stdPortion: 2 },
+  { name: 'Claras de Huevo', unit: 'unidad', calPerUnit: 17, stdPortion: 5 },
+  { name: 'Jamón de Pavo', unit: 'rebanada', calPerUnit: 30, stdPortion: 3 },
+  
+  // --- CARBOHIDRATOS ---
+  { name: 'Arroz Blanco', unit: 'g', calPerUnit: 1.30, stdPortion: 150 },
+  { name: 'Arroz Integral', unit: 'g', calPerUnit: 1.11, stdPortion: 150 },
+  { name: 'Pasta / Espagueti', unit: 'g', calPerUnit: 1.31, stdPortion: 150 },
+  { name: 'Pan Blanco', unit: 'rebanada', calPerUnit: 67, stdPortion: 2 },
+  { name: 'Pan Integral', unit: 'rebanada', calPerUnit: 80, stdPortion: 2 },
+  { name: 'Avena', unit: 'g', calPerUnit: 3.89, stdPortion: 40 },
+  { name: 'Papa (Hervida)', unit: 'g', calPerUnit: 0.87, stdPortion: 200 },
+  { name: 'Batata / Camote', unit: 'g', calPerUnit: 0.86, stdPortion: 200 },
+  { name: 'Frijoles / Caraotas', unit: 'g', calPerUnit: 1.32, stdPortion: 150 },
+  
+  // --- GRASAS ---
+  { name: 'Aceite de Oliva', unit: 'cucharada', calPerUnit: 119, stdPortion: 1 },
+  { name: 'Mantequilla', unit: 'cucharada', calPerUnit: 102, stdPortion: 1 },
+  { name: 'Palta / Aguacate', unit: 'g', calPerUnit: 1.60, stdPortion: 50 },
+  { name: 'Maní / Cacahuates', unit: 'g', calPerUnit: 5.67, stdPortion: 30 },
+  { name: 'Almendras', unit: 'g', calPerUnit: 5.79, stdPortion: 30 },
+  { name: 'Queso Mozzarella', unit: 'g', calPerUnit: 2.80, stdPortion: 30 },
+  
+  // --- FRUTAS Y VERDURAS ---
+  { name: 'Manzana', unit: 'unidad', calPerUnit: 95, stdPortion: 1 },
+  { name: 'Banana / Cambur', unit: 'unidad', calPerUnit: 105, stdPortion: 1 },
+  { name: 'Naranja', unit: 'unidad', calPerUnit: 62, stdPortion: 1 },
+  { name: 'Fresas', unit: 'g', calPerUnit: 0.32, stdPortion: 150 },
+  { name: 'Tomate', unit: 'g', calPerUnit: 0.18, stdPortion: 100 },
+  { name: 'Lechuga', unit: 'g', calPerUnit: 0.15, stdPortion: 50 },
+  
+  // --- OTROS SNACKS ---
+  { name: 'Pizza (Muzzarella)', unit: 'porción', calPerUnit: 280, stdPortion: 2 },
+  { name: 'Hamburguesa (Simple)', unit: 'unidad', calPerUnit: 500, stdPortion: 1 },
+  { name: 'Papas Fritas', unit: 'porción', calPerUnit: 365, stdPortion: 1 },
+  { name: 'Cerveza (Lata)', unit: 'unidad', calPerUnit: 153, stdPortion: 1 },
+  { name: 'Coca-Cola (Vaso)', unit: 'unidad', calPerUnit: 140, stdPortion: 1 },
+  { name: 'Café con Leche', unit: 'taza', calPerUnit: 80, stdPortion: 1 },
+  { name: 'Fernet con Coca', unit: 'vaso', calPerUnit: 280, stdPortion: 1 },
 ];
 
 // --- UTILIDADES ---
@@ -281,7 +313,7 @@ const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => void }) =>
         </Button>
       </div>
 
-      <p className="mt-12 text-zinc-600 text-sm z-10">v2.2.0 • Ernesto Edition</p>
+      <p className="mt-12 text-zinc-600 text-sm z-10">v2.4.0 • Ernesto Edition</p>
     </div>
   );
 };
@@ -529,7 +561,12 @@ interface AddFoodProps {
 const AddFoodModal: React.FC<AddFoodProps> = ({ onClose, onAdd, foodDatabase, onSaveNewFood }) => {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFood, setSelectedFood] = useState<FoodItemDB | null>(null);
-  const [amount, setAmount] = useState('');
+  
+  // Estados para búsqueda y cálculo
+  const [measureMode, setMeasureMode] = useState<'exact' | 'portions'>('exact');
+  const [amount, setAmount] = useState(''); // Para modo exacto
+  const [portions, setPortions] = useState(1); // Para modo porciones
+
   const [mode, setMode] = useState<'search' | 'manual'>('search');
 
   // Estado para el modo manual extendido
@@ -544,14 +581,31 @@ const AddFoodModal: React.FC<AddFoodProps> = ({ onClose, onAdd, foodDatabase, on
       return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase();
     };
     const term = normalizeText(searchTerm);
-    // Usamos foodDatabase (que incluye los customs)
     return foodDatabase.filter(f => normalizeText(f.name).includes(term));
   }, [searchTerm, foodDatabase]);
 
   const handleAddSearch = () => {
-    if (selectedFood && amount) {
-      const cals = Math.round(selectedFood.calPerUnit * parseFloat(amount));
-      onAdd({ name: selectedFood.name, amount: parseFloat(amount), unit: selectedFood.unit, calories: cals });
+    if (!selectedFood) return;
+
+    let finalAmount = 0;
+    let finalCals = 0;
+
+    if (measureMode === 'exact' && amount) {
+      finalAmount = parseFloat(amount);
+      finalCals = Math.round(selectedFood.calPerUnit * finalAmount);
+    } else if (measureMode === 'portions') {
+      const stdPortion = selectedFood.stdPortion || (selectedFood.unit === 'g' || selectedFood.unit === 'ml' ? 100 : 1);
+      finalAmount = stdPortion * portions;
+      finalCals = Math.round(selectedFood.calPerUnit * finalAmount);
+    }
+
+    if (finalAmount > 0) {
+      onAdd({ 
+        name: selectedFood.name, 
+        amount: finalAmount, 
+        unit: selectedFood.unit, 
+        calories: finalCals 
+      });
       onClose();
     }
   };
@@ -575,19 +629,26 @@ const AddFoodModal: React.FC<AddFoodProps> = ({ onClose, onAdd, foodDatabase, on
 
     // Guardar en la base de datos si el usuario quiere
     if (saveToDB) {
-      // Calculamos calorias por unidad
       const calPerUnit = totalCals / finalAmount;
-      
       onSaveNewFood({
         name: manualName,
         unit: finalUnit,
         calPerUnit: parseFloat(calPerUnit.toFixed(2)),
+        // Si guarda manual, asumimos que esa cantidad es una "porción estándar" para futuras referencias
+        stdPortion: finalAmount, 
         isCustom: true
       });
     }
 
     onClose();
   };
+
+  // Reset al cambiar de alimento
+  useEffect(() => {
+    setAmount('');
+    setPortions(1);
+    setMeasureMode('exact');
+  }, [selectedFood]);
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/80 backdrop-blur-sm p-4">
@@ -609,7 +670,7 @@ const AddFoodModal: React.FC<AddFoodProps> = ({ onClose, onAdd, foodDatabase, on
                 <>
                   <div className="relative mb-4">
                     <Search className="absolute left-3 top-3 text-zinc-500" size={20} />
-                    <input autoFocus placeholder="Buscar (ej. Arroz...)" className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-10 pr-4 py-3 text-white focus:ring-2 focus:ring-emerald-500/50 outline-none" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
+                    <input autoFocus placeholder="Buscar (ej. Arepa, Milanesa...)" className="w-full bg-zinc-950 border border-zinc-800 rounded-xl pl-10 pr-4 py-3 text-white focus:ring-2 focus:ring-emerald-500/50 outline-none" value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)} />
                   </div>
                   <div className="space-y-2 max-h-[250px] overflow-y-auto custom-scrollbar">
                     {filteredFoods.map((food, idx) => (
@@ -631,12 +692,55 @@ const AddFoodModal: React.FC<AddFoodProps> = ({ onClose, onAdd, foodDatabase, on
               ) : (
                 <div className="animate-fade-in">
                   <div className="flex items-center gap-2 mb-6 text-zinc-400 cursor-pointer hover:text-white" onClick={() => setSelectedFood(null)}><ArrowLeft size={16} /> Volver a buscar</div>
+                  
                   <h3 className="text-xl font-bold text-white mb-1">{selectedFood.name}</h3>
                   <p className="text-emerald-400 text-sm mb-6">{selectedFood.calPerUnit} cal por {selectedFood.unit}</p>
-                  <Input label={`Cantidad (${selectedFood.unit})`} type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0" autoFocus />
+
+                  {/* SELECTOR DE MODO DE MEDICIÓN */}
+                  <div className="bg-zinc-950 rounded-xl p-1 flex mb-6 border border-zinc-800">
+                    <button 
+                      onClick={() => setMeasureMode('exact')}
+                      className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${measureMode === 'exact' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
+                    >
+                      <Scale size={16} /> Medida Exacta
+                    </button>
+                    <button 
+                      onClick={() => setMeasureMode('portions')}
+                      className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${measureMode === 'portions' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
+                    >
+                      <PieChart size={16} /> Porciones
+                    </button>
+                  </div>
+
+                  {measureMode === 'exact' ? (
+                     <Input label={`Cantidad (${selectedFood.unit})`} type="number" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0" autoFocus />
+                  ) : (
+                    <div className="mb-4">
+                      <label className="block text-xs font-medium text-zinc-400 mb-1 uppercase tracking-wider">Número de Porciones</label>
+                      <select 
+                        value={portions} 
+                        onChange={(e) => setPortions(parseInt(e.target.value))}
+                        className="w-full bg-zinc-900 border border-zinc-800 rounded-xl px-4 py-3 text-white focus:ring-2 focus:ring-emerald-500/50 outline-none appearance-none"
+                      >
+                        {[1, 2, 3, 4, 5, 6, 7, 8, 9, 10].map(num => (
+                          <option key={num} value={num}>{num} {num === 1 ? 'Porción' : 'Porciones'}</option>
+                        ))}
+                      </select>
+                      <p className="mt-2 text-xs text-zinc-500 flex items-center gap-1">
+                        <Activity size={12} />
+                        1 porción estándar ≈ <span className="text-zinc-300 font-bold">{selectedFood.stdPortion || (selectedFood.unit === 'g' ? 100 : 1)}{selectedFood.unit}</span>
+                      </p>
+                    </div>
+                  )}
+
                   <div className="mt-4 p-4 bg-zinc-950 rounded-xl mb-6 flex justify-between items-center border border-zinc-800">
                     <span className="text-zinc-400">Total Calorías:</span>
-                    <span className="text-2xl font-bold text-white">{amount ? Math.round(selectedFood.calPerUnit * parseFloat(amount)) : 0}</span>
+                    <span className="text-2xl font-bold text-white">
+                      {measureMode === 'exact' 
+                        ? (amount ? Math.round(selectedFood.calPerUnit * parseFloat(amount)) : 0)
+                        : Math.round(selectedFood.calPerUnit * (selectedFood.stdPortion || (selectedFood.unit === 'g' ? 100 : 1)) * portions)
+                      }
+                    </span>
                   </div>
                   <Button onClick={handleAddSearch}>Agregar</Button>
                 </div>

@@ -313,7 +313,7 @@ const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => void }) =>
         </Button>
       </div>
 
-      <p className="mt-12 text-zinc-600 text-sm z-10">v2.5.0 • Ernesto Edition</p>
+      <p className="mt-12 text-zinc-600 text-sm z-10">v2.5.1 • Ernesto Edition</p>
     </div>
   );
 };
@@ -560,7 +560,7 @@ const AddFoodModal: React.FC<AddFoodProps> = ({ onClose, onAdd, foodDatabase, on
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFood, setSelectedFood] = useState<FoodItemDB | null>(null);
   
-  // CAMBIO 1: Default es 'portions'
+  // Default es 'portions'
   const [measureMode, setMeasureMode] = useState<'portions' | 'exact'>('portions');
   const [amount, setAmount] = useState(''); // Para modo exacto
   const [portions, setPortions] = useState(1); // Para modo porciones
@@ -645,7 +645,7 @@ const AddFoodModal: React.FC<AddFoodProps> = ({ onClose, onAdd, foodDatabase, on
   useEffect(() => {
     setAmount('');
     setPortions(1);
-    setMeasureMode('portions'); // CAMBIO: Reset a portions
+    setMeasureMode('portions'); 
   }, [selectedFood]);
 
   return (
@@ -694,7 +694,6 @@ const AddFoodModal: React.FC<AddFoodProps> = ({ onClose, onAdd, foodDatabase, on
                   <h3 className="text-xl font-bold text-white mb-1">{selectedFood.name}</h3>
                   <p className="text-emerald-400 text-sm mb-6">{selectedFood.calPerUnit} cal por {selectedFood.unit}</p>
 
-                  {/* CAMBIO 1: SELECTOR DE MODO DE MEDICIÓN INTERCAMBIADO */}
                   <div className="bg-zinc-950 rounded-xl p-1 flex mb-6 border border-zinc-800">
                      <button 
                       onClick={() => setMeasureMode('portions')}
@@ -1102,7 +1101,6 @@ export default function App() {
           onSelectDate={(date) => {
             handleNavigate('dailylog', date);
           }}
-          onBack={() => window.history.back()}
         />
       )}
       
@@ -1123,7 +1121,6 @@ export default function App() {
         <WeeklyGoalView 
           user={userData} 
           allLogs={allLogs} 
-          onBack={() => window.history.back()}
         />
       )}
     </div>

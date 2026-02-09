@@ -313,7 +313,7 @@ const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => void }) =>
         </Button>
       </div>
 
-      <p className="mt-12 text-zinc-600 text-sm z-10">v2.4.0 • Ernesto Edition</p>
+      <p className="mt-12 text-zinc-600 text-sm z-10">v2.5.0 • Ernesto Edition</p>
     </div>
   );
 };
@@ -322,10 +322,9 @@ const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => void }) =>
 interface WeeklyGoalProps {
   user: UserData | null;
   allLogs: LogsMap;
-  onBack: () => void;
 }
 
-const WeeklyGoalView: React.FC<WeeklyGoalProps> = ({ user, allLogs, onBack }) => {
+const WeeklyGoalView: React.FC<WeeklyGoalProps> = ({ user, allLogs }) => {
   const dailyTarget = useMemo(() => {
     if (!user) return 2000;
     let bmr;
@@ -359,7 +358,7 @@ const WeeklyGoalView: React.FC<WeeklyGoalProps> = ({ user, allLogs, onBack }) =>
   return (
     <div className="min-h-screen bg-zinc-950 p-6 flex flex-col max-w-lg mx-auto">
        <div className="flex items-center gap-4 mb-8">
-        <button onClick={onBack} className="p-2 bg-zinc-900 rounded-full text-zinc-400 hover:text-white transition-colors">
+        <button onClick={() => window.history.back()} className="p-2 bg-zinc-900 rounded-full text-zinc-400 hover:text-white transition-colors">
           <ArrowLeft size={24} />
         </button>
         <h1 className="text-2xl font-bold text-white">Progreso Semanal</h1>
@@ -422,10 +421,9 @@ const WeeklyGoalView: React.FC<WeeklyGoalProps> = ({ user, allLogs, onBack }) =>
 // 3. Calendario
 interface CalendarProps {
   onSelectDate: (date: string) => void;
-  onBack: () => void;
 }
 
-const CalendarView: React.FC<CalendarProps> = ({ onSelectDate, onBack }) => {
+const CalendarView: React.FC<CalendarProps> = ({ onSelectDate }) => {
   const [currentDate] = useState(new Date());
   const year = currentDate.getFullYear();
   const month = currentDate.getMonth();
@@ -447,7 +445,7 @@ const CalendarView: React.FC<CalendarProps> = ({ onSelectDate, onBack }) => {
   return (
     <div className="min-h-screen bg-zinc-950 p-6 flex flex-col max-w-lg mx-auto">
       <div className="flex items-center justify-between mb-8">
-        <button onClick={onBack} className="p-2 bg-zinc-900 rounded-full text-zinc-400 hover:text-white transition-colors">
+        <button onClick={() => window.history.back()} className="p-2 bg-zinc-900 rounded-full text-zinc-400 hover:text-white transition-colors">
           <ArrowLeft size={24} />
         </button>
         <h2 className="text-2xl font-bold text-white capitalize">
@@ -524,7 +522,7 @@ const UserSetup: React.FC<UserSetupProps> = ({ userData, onSave, onBack }) => {
     <div className="animate-fade-in p-6 max-w-md mx-auto min-h-screen flex flex-col">
       <div className="flex items-center gap-4 mb-8 pt-4">
         {onBack && (
-          <button onClick={onBack} className="p-2 bg-zinc-900 rounded-full text-zinc-400 hover:text-white transition-colors">
+          <button onClick={() => window.history.back()} className="p-2 bg-zinc-900 rounded-full text-zinc-400 hover:text-white transition-colors">
             <ArrowLeft size={20} />
           </button>
         )}
@@ -562,8 +560,8 @@ const AddFoodModal: React.FC<AddFoodProps> = ({ onClose, onAdd, foodDatabase, on
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedFood, setSelectedFood] = useState<FoodItemDB | null>(null);
   
-  // Estados para búsqueda y cálculo
-  const [measureMode, setMeasureMode] = useState<'exact' | 'portions'>('exact');
+  // CAMBIO 1: Default es 'portions'
+  const [measureMode, setMeasureMode] = useState<'portions' | 'exact'>('portions');
   const [amount, setAmount] = useState(''); // Para modo exacto
   const [portions, setPortions] = useState(1); // Para modo porciones
 
@@ -647,7 +645,7 @@ const AddFoodModal: React.FC<AddFoodProps> = ({ onClose, onAdd, foodDatabase, on
   useEffect(() => {
     setAmount('');
     setPortions(1);
-    setMeasureMode('exact');
+    setMeasureMode('portions'); // CAMBIO: Reset a portions
   }, [selectedFood]);
 
   return (
@@ -696,19 +694,19 @@ const AddFoodModal: React.FC<AddFoodProps> = ({ onClose, onAdd, foodDatabase, on
                   <h3 className="text-xl font-bold text-white mb-1">{selectedFood.name}</h3>
                   <p className="text-emerald-400 text-sm mb-6">{selectedFood.calPerUnit} cal por {selectedFood.unit}</p>
 
-                  {/* SELECTOR DE MODO DE MEDICIÓN */}
+                  {/* CAMBIO 1: SELECTOR DE MODO DE MEDICIÓN INTERCAMBIADO */}
                   <div className="bg-zinc-950 rounded-xl p-1 flex mb-6 border border-zinc-800">
+                     <button 
+                      onClick={() => setMeasureMode('portions')}
+                      className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${measureMode === 'portions' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
+                    >
+                      <PieChart size={16} /> Porciones
+                    </button>
                     <button 
                       onClick={() => setMeasureMode('exact')}
                       className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${measureMode === 'exact' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
                     >
                       <Scale size={16} /> Medida Exacta
-                    </button>
-                    <button 
-                      onClick={() => setMeasureMode('portions')}
-                      className={`flex-1 py-2 px-3 rounded-lg text-sm font-medium transition-all flex items-center justify-center gap-2 ${measureMode === 'portions' ? 'bg-zinc-800 text-white shadow-sm' : 'text-zinc-500 hover:text-zinc-300'}`}
-                    >
-                      <PieChart size={16} /> Porciones
                     </button>
                   </div>
 
@@ -869,7 +867,7 @@ const DailyLogView: React.FC<DailyLogProps> = ({ user, log, dateStr, onAddFood, 
 
       {/* Header */}
       <div className="px-4 pt-8 pb-4 flex items-center gap-4">
-        <button onClick={onBack} className="p-2 bg-zinc-900/50 rounded-full text-zinc-200 border border-zinc-800 transition-colors hover:bg-zinc-800">
+        <button onClick={() => window.history.back()} className="p-2 bg-zinc-900/50 rounded-full text-zinc-200 border border-zinc-800 transition-colors hover:bg-zinc-800">
           <ArrowLeft size={20} />
         </button>
         <div className="flex-1">
@@ -976,6 +974,34 @@ export default function App() {
   // ESTADO NUEVO: Base de datos de alimentos dinámica
   const [foodDatabase, setFoodDatabase] = useState<FoodItemDB[]>(COMMON_FOODS);
 
+  // CAMBIO 2: MANEJO DE NAVEGACIÓN (HISTORIAL)
+  useEffect(() => {
+    // Reemplaza el estado inicial para que 'home' sea el base
+    window.history.replaceState({ view: 'home' }, '');
+
+    const onPopState = (event: PopStateEvent) => {
+      if (event.state && event.state.view) {
+        setView(event.state.view);
+        if (event.state.date) {
+           setSelectedDate(event.state.date);
+        }
+      } else {
+        // Si no hay estado (ej. página inicial), vamos a home
+        setView('home');
+      }
+    };
+
+    window.addEventListener('popstate', onPopState);
+    return () => window.removeEventListener('popstate', onPopState);
+  }, []);
+
+  // Función wrapper para navegar guardando historial
+  const handleNavigate = (screen: string, date?: string) => {
+    setView(screen);
+    if (date) setSelectedDate(date);
+    window.history.pushState({ view: screen, date: date || selectedDate }, '');
+  };
+
   // Cargar datos
   useEffect(() => {
     const savedUser = localStorage.getItem('calotrack_user');
@@ -1019,7 +1045,7 @@ export default function App() {
   const handleSaveUser = (data: UserData) => {
     setUserData(data);
     localStorage.setItem('calotrack_user', JSON.stringify(data));
-    setView('home');
+    handleNavigate('home');
   };
 
   // NUEVA FUNCIÓN: Guardar nuevo alimento
@@ -1057,8 +1083,8 @@ export default function App() {
       {view === 'home' && (
         <HomeScreen 
           onNavigate={(screen) => {
-            if (screen === 'dailylog') setSelectedDate(getTodayStr());
-            setView(screen);
+             if (screen === 'dailylog') handleNavigate(screen, getTodayStr());
+             else handleNavigate(screen);
           }} 
         />
       )}
@@ -1067,17 +1093,16 @@ export default function App() {
         <UserSetup 
           userData={userData}
           onSave={handleSaveUser}
-          onBack={userData ? () => setView('home') : null}
+          onBack={userData ? () => window.history.back() : null}
         />
       )}
 
       {view === 'calendar' && (
         <CalendarView 
           onSelectDate={(date) => {
-            setSelectedDate(date);
-            setView('dailylog');
+            handleNavigate('dailylog', date);
           }}
-          onBack={() => setView('home')}
+          onBack={() => window.history.back()}
         />
       )}
       
@@ -1088,7 +1113,7 @@ export default function App() {
           dateStr={selectedDate}
           onAddFood={handleAddFood} 
           onDeleteFood={handleDeleteFood}
-          onBack={() => setView('calendar')}
+          onBack={() => window.history.back()}
           foodDatabase={foodDatabase}
           onSaveNewFood={handleSaveNewFood}
         />
@@ -1098,7 +1123,7 @@ export default function App() {
         <WeeklyGoalView 
           user={userData} 
           allLogs={allLogs} 
-          onBack={() => setView('home')} 
+          onBack={() => window.history.back()}
         />
       )}
     </div>

@@ -14,7 +14,8 @@ import {
   CheckCircle2,
   Save,
   Scale,
-  PieChart
+  PieChart,
+  Download // <--- Importamos el icono Download
 } from 'lucide-react';
 
 // --- INTERFACES ---
@@ -45,6 +46,74 @@ interface UserData {
 interface LogsMap {
   [date: string]: LogItem[];
 }
+
+// --- COMPONENTE DE INSTALACIÓN PWA ---
+const InstallPrompt = () => {
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [show, setShow] = useState(false);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e: any) => {
+      // Prevenir que el navegador muestre su propio banner feo o lo bloquee
+      e.preventDefault();
+      // Guardar el evento para dispararlo cuando el usuario quiera
+      setDeferredPrompt(e);
+      // Mostrar nuestra UI personalizada
+      setShow(true);
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
+
+  const handleInstallClick = () => {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult: any) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('Usuario aceptó instalar');
+        }
+        setDeferredPrompt(null);
+        setShow(false);
+      });
+    }
+  };
+
+  if (!show) return null;
+
+  return (
+    <div className="fixed bottom-6 left-4 right-4 z-50 animate-fade-in-up">
+      <div className="bg-zinc-900/95 backdrop-blur-md border border-emerald-500/30 p-4 rounded-2xl shadow-2xl flex items-center justify-between gap-3">
+        <div className="flex items-center gap-3">
+          <div className="p-3 bg-emerald-500/10 rounded-xl text-emerald-500">
+            <Download size={24} />
+          </div>
+          <div>
+            <p className="text-sm font-bold text-white">Instalar App</p>
+            <p className="text-xs text-zinc-400">Acceso rápido y pantalla completa</p>
+          </div>
+        </div>
+        <div className="flex items-center gap-2">
+          <button 
+            onClick={() => setShow(false)}
+            className="text-zinc-500 hover:text-white px-2 py-2 text-xs"
+          >
+            Ahora no
+          </button>
+          <button 
+            onClick={handleInstallClick} 
+            className="bg-emerald-500 text-zinc-950 px-4 py-2 rounded-lg text-xs font-bold hover:bg-emerald-400 transition-colors shadow-lg shadow-emerald-500/20"
+          >
+            Instalar
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+};
 
 // --- COMPONENTE DE ESTILOS Y CONFIGURACIÓN ---
 const StyleInjector = () => {
@@ -1078,6 +1147,7 @@ export default function App() {
   return (
     <div className="font-sans text-zinc-100 bg-zinc-950 min-h-screen selection:bg-emerald-500/30">
       <StyleInjector />
+      <InstallPrompt /> {/* <--- Agregamos el prompt aquí para que esté disponible globalmente */}
       
       {view === 'home' && (
         <HomeScreen 

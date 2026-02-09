@@ -313,7 +313,7 @@ const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => void }) =>
         </Button>
       </div>
 
-      <p className="mt-12 text-zinc-600 text-sm z-10">v2.5.1 • Ernesto Edition</p>
+      <p className="mt-12 text-zinc-600 text-sm z-10">v2.5.2 • Ernesto Edition</p>
     </div>
   );
 };
@@ -827,12 +827,12 @@ interface DailyLogProps {
   dateStr: string;
   onAddFood: (item: LogItem) => void;
   onDeleteFood: (index: number) => void;
-  onBack: () => void;
+  // onBack removido porque se usa window.history.back() internamente
   foodDatabase: FoodItemDB[]; // Pasamos la DB
   onSaveNewFood: (newFood: FoodItemDB) => void; // Pasamos la función de guardar
 }
 
-const DailyLogView: React.FC<DailyLogProps> = ({ user, log, dateStr, onAddFood, onDeleteFood, onBack, foodDatabase, onSaveNewFood }) => {
+const DailyLogView: React.FC<DailyLogProps> = ({ user, log, dateStr, onAddFood, onDeleteFood, foodDatabase, onSaveNewFood }) => {
   const [showAddModal, setShowAddModal] = useState(false);
 
   const calculateTargets = () => {
@@ -1111,7 +1111,6 @@ export default function App() {
           dateStr={selectedDate}
           onAddFood={handleAddFood} 
           onDeleteFood={handleDeleteFood}
-          onBack={() => window.history.back()}
           foodDatabase={foodDatabase}
           onSaveNewFood={handleSaveNewFood}
         />

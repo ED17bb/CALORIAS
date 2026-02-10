@@ -15,7 +15,7 @@ import {
   Save,
   Scale,
   PieChart,
-  Download // <--- Importamos el icono Download
+  Download
 } from 'lucide-react';
 
 // --- INTERFACES ---
@@ -60,6 +60,7 @@ const InstallPrompt = () => {
       setDeferredPrompt(e);
       // Mostrar nuestra UI personalizada
       setShow(true);
+      console.log("¡Evento de instalación capturado!");
     };
 
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
@@ -156,8 +157,27 @@ const StyleInjector = () => {
     document.body.style.color = 'white';
     document.body.style.fontFamily = "'Inter', sans-serif";
 
-    // 4. Meta Tags
-    const setMetaTags = () => {
+    // 4. INYECTAR MANIFEST Y FAVICON (CRUCIAL PARA INSTALACIÓN)
+    const setPwaAssets = () => {
+      // Favicon
+      let linkIcon = document.querySelector("link[rel~='icon']") as HTMLLinkElement;
+      if (!linkIcon) {
+        linkIcon = document.createElement('link');
+        linkIcon.rel = 'icon';
+        document.head.appendChild(linkIcon);
+      }
+      linkIcon.href = '/logo.jpg'; // Apuntamos a tu logo
+
+      // Manifest (Esencial para instalar)
+      let linkManifest = document.querySelector("link[rel='manifest']") as HTMLLinkElement;
+      if (!linkManifest) {
+        linkManifest = document.createElement('link');
+        linkManifest.rel = 'manifest';
+        linkManifest.href = '/manifest.json';
+        document.head.appendChild(linkManifest);
+      }
+
+      // Meta Theme Color
       let metaTheme = document.querySelector("meta[name='theme-color']") as HTMLMetaElement;
       if (!metaTheme) {
         metaTheme = document.createElement('meta');
@@ -166,7 +186,17 @@ const StyleInjector = () => {
       }
       metaTheme.content = '#09090b';
     };
-    setMetaTags();
+    setPwaAssets();
+
+    // 5. REGISTRAR SERVICE WORKER (CRUCIAL PARA INSTALACIÓN)
+    if ('serviceWorker' in navigator) {
+      window.addEventListener('load', () => {
+        navigator.serviceWorker.register('/sw.js').then(
+          (registration) => console.log('SW registrado con éxito: ', registration.scope),
+          (err) => console.log('SW fallo al registrarse: ', err)
+        );
+      });
+    }
     
     document.title = "CaloTrack - Ernesto Edition";
 
@@ -353,8 +383,21 @@ const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => void }) =>
       <div className="absolute top-40 -left-20 w-40 h-40 bg-blue-500/10 rounded-full blur-3xl" />
 
       <div className="mb-12 text-center z-10">
-        <div className="w-32 h-32 mx-auto flex items-center justify-center mb-6 bg-zinc-900 rounded-full shadow-2xl shadow-emerald-500/10 border border-zinc-800">
-           <Flame size={64} className="text-emerald-500" />
+        {/* LOGO CONTAINER: Restaurado para usar la imagen de public/logo.jpg */}
+        <div className="w-40 h-40 mx-auto flex items-center justify-center mb-6 bg-zinc-900 rounded-full shadow-2xl shadow-emerald-500/10 border border-zinc-800 overflow-hidden">
+           <img 
+             src="/logo.jpg" 
+             alt="CaloTrack Logo" 
+             className="w-full h-full object-cover" 
+             onError={(e) => {
+               // Fallback por si la imagen falla o no existe aún
+               e.currentTarget.style.display = 'none';
+               e.currentTarget.parentElement?.classList.add('flex', 'items-center', 'justify-center');
+               const fallbackIcon = document.createElement('div');
+               fallbackIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="64" height="64" viewBox="0 0 24 24" fill="none" stroke="#10b981" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-flame"><path d="M8.5 14.5A2.5 2.5 0 0 0 11 12c0-1.38-.5-2-1-3-1.072-2.143-.224-4.054 2-6 .5 2.5 2 4.9 4 6.5 2 1.6 3 3.5 3 5.5a7 7 0 1 1-14 0c0-1.153.433-2.294 1-3a2.5 2.5 0 0 0 2.5 2.5z"/></svg>';
+               e.currentTarget.parentElement?.appendChild(fallbackIcon);
+             }}
+           />
         </div>
         <h1 className="text-5xl font-extrabold text-white mb-2 tracking-tight">QUE CALOR IA</h1>
         <p className="text-zinc-400 text-lg">Anota todo lo que comes, dale</p>
@@ -382,7 +425,7 @@ const HomeScreen = ({ onNavigate }: { onNavigate: (screen: string) => void }) =>
         </Button>
       </div>
 
-      <p className="mt-12 text-zinc-600 text-sm z-10">v2.5.2 • Ernesto Edition</p>
+      <p className="mt-12 text-zinc-600 text-sm z-10">v2.5.3 • Ernesto Edition</p>
     </div>
   );
 };
@@ -896,7 +939,7 @@ interface DailyLogProps {
   dateStr: string;
   onAddFood: (item: LogItem) => void;
   onDeleteFood: (index: number) => void;
-  // onBack removido porque se usa window.history.back() internamente
+  // onBack eliminado de aquí también
   foodDatabase: FoodItemDB[]; // Pasamos la DB
   onSaveNewFood: (newFood: FoodItemDB) => void; // Pasamos la función de guardar
 }
